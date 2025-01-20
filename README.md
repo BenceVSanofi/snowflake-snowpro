@@ -49,6 +49,9 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [15.2. Warehouse State and Properties](#152-warehouse-state-and-properties)
     - [15.2.1. Managing Warehouse States](#1521-managing-warehouse-states)
     - [15.2.2. Summary of Key Warehouse Parameters](#1522-summary-of-key-warehouse-parameters)
+  - [15.3. Warehouse Size and Billing](#153-warehouse-size-and-billing)
+  - [15.4. Resource Monitors](#154-resource-monitors)
+    - [15.4.1. Best Practices for Warehouse Size and Resource Monitors](#1541-best-practices-for-warehouse-size-and-resource-monitors)
 
 ## 1. Introduction
 
@@ -1006,7 +1009,68 @@ ALTER WAREHOUSE my_wh SET AUTO_RESUME = TRUE;
 #### 15.2.2. Summary of Key Warehouse Parameters
 
 | **Parameter**         | **Description**                                                                         | **Default Value** |
-| --------------------- | --------------------------------------------------------------------------------------- | ----------------- |
+|  |  | -- |
 | `AUTO_SUSPEND`        | Automatically suspends a warehouse after a specified period of inactivity (in seconds). | 600 seconds       |
 | `AUTO_RESUME`         | Automatically resumes a warehouse when a query is submitted.                            | TRUE              |
 | `INITIALLY_SUSPENDED` | Specifies whether a warehouse should start in a suspended state.                        | FALSE             |
+
+### 15.3. Warehouse Size and Billing
+
+When creating a Virtual Warehouse, you can choose from a range of sizes, each with different compute capacities. The size of the warehouse affects the **compute power** available for query execution and the **cost** associated with running the warehouse.
+
+- Virtual Warehouses can be created in **10 t-shirt sizes** ranging from `X-SMALL` to `6X-LARGE`.  
+- The **compute power approximately doubles** with each size increase.  
+- Larger Virtual Warehouses typically offer **better query performance**, especially for workloads with high concurrency or complex queries.  
+- **Choosing the right size** is typically determined by testing a representative query or workload.  
+- Data loading operations (e.g., `COPY INTO`) do not generally benefit from larger Virtual Warehouses.  
+- Increasing the size of a Virtual Warehouse does **not guarantee improved data loading performance**.  
+- Virtual Warehouses are **billed based on their size** and **time spent in the `STARTED` state**:
+  - **Billing starts** when a warehouse is started, even if no queries are being executed.  
+  - The **first 60 seconds** are always billed, followed by per-second billing.  
+- **Cost doubles** with each increase in warehouse size.  
+
+### 15.4. Resource Monitors
+
+Resource Monitors are objects used to set credit usage limits on Virtual Warehouses or accounts. They can be applied at the account level or to specific warehouses. Limits can be set for a specified interval (e.g., daily, weekly, or monthly) or a specific date range. When a credit usage limit is reached, actions can be triggered, such as notifying users, suspending the warehouse, or immediately suspending the warehouse.
+
+- **Resource Monitors** are objects used to set **credit usage limits** on Virtual Warehouses or accounts.  
+- They can be applied at the **account level** or to **specific warehouses**.  
+- Limits can be set for a specified **interval** (e.g., daily, weekly, or monthly) or a specific **date range**.  
+- When a credit usage limit is reached, **actions** can be triggered, such as:
+  - **Notify** users about credit consumption.
+  - **Suspend** the warehouse.
+  - **Suspend immediately** to stop the warehouse instantly.
+- **Only account administrators** can create and manage Resource Monitors.  
+- Resource Monitors are a **proactive tool** to manage and control credit usage, avoiding unplanned costs.
+
+The following SQL commands demonstrate how to create a Resource Monitor, set thresholds, and assign it to an account.
+
+```sql
+-- Create a Resource Monitor for credit usage control
+CREATE RESOURCE MONITOR ANALYSIS_RM
+WITH CREDIT_QUOTA = 100  -- Set credit limit to 100 credits
+FREQUENCY = MONTHLY      -- Monitor usage monthly
+START_TIMESTAMP = '2023-01-04 00:00 GMT'  -- Start monitoring from this date
+TRIGGERS
+  ON 50 PERCENT DO NOTIFY                  -- Notify at 50% of credit usage
+  ON 75 PERCENT DO NOTIFY                  -- Notify at 75% of credit usage
+  ON 95 PERCENT DO SUSPEND                 -- Suspend warehouse at 95% usage
+  ON 100 PERCENT DO SUSPEND_IMMEDIATE;     -- Immediately suspend at 100% usage
+
+-- Assign the Resource Monitor to the account
+ALTER ACCOUNT SET RESOURCE_MONITOR = ANALYSIS_RM;
+```
+
+#### 15.4.1. Best Practices for Warehouse Size and Resource Monitors
+
+1. **Warehouse Size**:
+   - Use larger warehouses only for workloads that require high concurrency or complex queries.
+   - Avoid oversizing warehouses for simple tasks like data loading.
+
+2. **Billing Optimization**:
+   - Configure **AUTO_SUSPEND** to minimize idle time and avoid unnecessary costs.
+   - Monitor warehouse usage to identify underutilized warehouses.
+
+3. **Resource Monitors**:
+   - Use Resource Monitors to set credit limits and enforce cost controls.
+   - Configure appropriate triggers to notify users and prevent unexpected charges.
