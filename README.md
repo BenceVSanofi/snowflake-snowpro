@@ -9,14 +9,17 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
 ## Table of Contents
 
 - [Introduction](#introduction)
-- [Snowflake Features and Architecture](#snowflake-features-and-architecture)
-  - [Snowflake High-Level Overview](#snowflake-high-level-overview)
+- [Features and Architecture](#features-and-architecture)
+  - [High-Level Overview](#high-level-overview)
   - [Multi-Cluster Shared Data Architecture](#multi-cluster-shared-data-architecture)
     - [Storage Layer](#storage-layer)
     - [Query Processing or Compute Layer](#query-processing-or-compute-layer)
     - [Services Layer](#services-layer)
-- [Snowflake Editions and Features](#snowflake-editions-and-features)
-- [Snowflake Object Model and Catalog](#snowflake-object-model-and-catalog)
+- [Editions and Features](#editions-and-features)
+- [Object Model](#object-model)
+  - [Organization](#organization)
+  - [Account](#account)
+  - [Database and Schema](#database-and-schema)
 
 ## Introduction
 
@@ -24,29 +27,19 @@ This document contains notes and study material for the **SnowPro Core Certifica
 
 These notes were prepared as part of my study for the *24C21 Snowflake Performance Automation and Tuning* course, available at [Snowflake Performance Automation and Tuning](https://www.snowflake.com/wp-content/uploads/2022/06/Performance-Automation-and-Tuning-3-Day.pdf).
 
-The course covers essential topics to help understand Snowflake's core functionalities and prepare for the certification exam. Topics include:
+## Features and Architecture
 
-1. Snowflake features and architecture
-2. Account access and security
-3. Performance concepts: virtual warehouses
-4. Performance concepts: query optimization
-5. Data loading and unloading
-6. Data transformations
-7. Storage, data protection, and data sharing
+Snowflake (SF) is a SaaS platform that provides services such as storage, compute, and management across AWS, GCP, and Azure. **25% to 30%** of the certification exam will be on this topic. It consists of:
 
-## Snowflake Features and Architecture
-
-Snowflake is a SaaS platform that provides services such as storage, compute, and management across AWS, GCP, and Azure. **25% to 30%** of the certification exam will be on this topic. It consists of:
-
-- Snowflake high-level overview
+- High-level overview
 - Multi-cluster shared data architecture
 - Storage, compute, and services overview
-- Snowflake editions and features
-- Snowflake object model
-- Snowflake account billing
-- Snowflake connectivity
+- Editions and features
+- Object model
+- Account billing
+- Connectivity
 
-### Snowflake High-Level Overview
+### High-Level Overview
 
 Snowflake is a cloud-native data platform offered as a service. Calling Snowflake a data platform (rather than a data warehouse) points out that Snowflake has features and capabilities beyond those of a traditional data warehouse. It supports additional workloads like data science and features like native processing of semi-structured data similar to a data lake. Here are some features:
 
@@ -175,7 +168,7 @@ Services managed by this layer include:
 - **Query parsing and optimization**
 - **Security**
 
-## Snowflake Editions and Features
+## Editions and Features
 
 Snowflake offers four **editions**, each tailored to specific needs and budgets. These editions differ in their features, capabilities, and pricing models:
 
@@ -193,9 +186,95 @@ Snowflake offers four **editions**, each tailored to specific needs and budgets.
    - Includes all features of the Business Critical edition
    - Provides the highest level of security for governmental bodies and financial institutions by operating in a dedicated environment
 
-## Snowflake Object Model and Catalog
+## Object Model
 
-The core objects in Snowflake are structured in a logical hierarchy:
+The core objects in Snowflake are structured in a logical hierarchy with a **1:N relationship**. Every object in Snowflake is **securable**, meaning privileges (e.g., read, write) can be granted to roles, which are then assigned to users. This determines what users can do within Snowflake. Additionally, every object can be interacted with via SQL.
 
-- **Organizations**: A logical grouping of accounts
-- **Accounts**: A logical grouping of resources
+- **Organization**: A logical grouping of accounts.
+- **Account**: A logical grouping of services (UI, compute, storage) accessible via the URL or the account object itself, which can be used to change account properties. Accounts are assigned **account-level objects**:
+  - Network policy
+  - User
+  - Role
+  - Database (see below)
+  - Warehouse
+  - Share
+  - Resource monitor
+- **Databases**: Logical grouping of schemas. Databases are assigned **database-level objects**:
+  - Schema (see below)
+- **Schemas**: Logical grouping of tables, views, and other objects. Schemas are assigned **schema-level objects**:
+  - Stage
+  - Pipe
+  - Procedure
+  - Function
+  - Table: Logical representation of the stored data.
+  - View
+  - Task
+  - Stream
+
+### Organization
+
+Organizations are used to:
+
+- Manage one or more Snowflake accounts.
+- Set up and administer Snowflake features that make use of multiple accounts, e.g., database replication and failover.
+- Monitor usage across accounts.
+
+To set up an organization, you must contact Snowflake support, provide the organization name, and nominate an account. The `ORGADMIN` role is assigned to that account. The `ORGADMIN` is responsible for managing the lifecycle of accounts and can:
+
+- Create accounts, view organization details, and list regions.
+- Enable cross-account features, e.g., set up database replication for an account.
+- Monitor account usage by querying the `ORGANIZATION_USAGE` schema in the Snowflake database.
+
+### Account
+
+An **account** is the administrative unit for a collection of storage, compute, and cloud services, deployed and managed entirely on a selected cloud platform. Each account has the following characteristics:
+
+- **Cloud Platform**: Each account is hosted on a single cloud provider (AWS, GCP, or Azure).
+- **Region**: Each account is provisioned in a single geographic region (consider regulatory restrictions when moving data between regions).
+- **Edition**: Each account is created with a single Snowflake edition (can be updated later).
+- **System Role**: An account is created with the system-defined role `ACCOUNTADMIN`, which should be used sparingly. Enforce the principle of least privilege to maintain security.
+
+The **account identifier** is a concatenation of the account locator, region ID, and cloud provider. Alternatively, you can use the concatenation of the organization name and account name.
+
+### Database and Schema
+
+Both databases and schemas must follow naming conventions: they must start with an alphabetic character and cannot contain spaces or special characters unless enclosed in double quotes (in which case they become case-sensitive).
+
+**Databases** are the first logical container for the data in Snowflake. They group schemas, which, in turn, group tables and views. Each database must have a unique identifier within an account.
+
+- **Creating a Database**:
+  - A database can be created from scratch, cloned from an existing database, created with a retention policy, or created as a replica or from a shared database.
+
+   ```sql
+   -- Create a new database
+   create database my_database;
+
+   -- Clone an existing database
+   create database my_db_clone
+   clone my_database;
+
+   -- Create a database with a data retention policy
+   CREATE DATABASE MYDB1 DATA_RETENTION_TIME_IN_DAYS = 10;
+
+   -- Create a database as a replica from another account
+   CREATE DATABASE MYDB1 AS REPLICA OF MYORG.ACCOUNT1.MYDB1;
+
+   -- Create a database from a shared database in another account
+   CREATE DATABASE SHARED_DB FROM SHARE UTT783.SHARE;
+   ```
+
+**Schemas** are logical containers for tables, views, and other objects. They must have a unique identifier within a database. Like databases, schemas must start with an alphabetic character and cannot contain spaces or special characters unless enclosed in double quotes.
+
+- **Creating a Schema**:
+  - Schemas can also be cloned from existing schemas.
+
+   ```sql
+   -- Create a new schema
+   create schema my_schema;
+
+   -- Clone an existing schema
+   create schema my_schema_clone 
+   clone my_schema;
+   ```
+
+The combination of a **database** and **schema** name (e.g., `my_database.my_schema`) forms a **namespace** in Snowflake. This namespace simplifies querying tables and objects within the schema. Alternatively, you can use the `USE` command to set the default database and schema for the session.
