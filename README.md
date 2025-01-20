@@ -15,7 +15,7 @@ Snowflake is a cloud-native data platform offered as a service. It provides serv
 
 ## Introduction
 
-This document contains notes for the SnowPro Core Certification course [here](https://www.udemy.com/share/107srK3@7oBXnZzILRddmCPrD6_gfahyAsy1Vckxeh8lCT-OxVIOmA4F1RrOlQ40YMwFxm9LiA==/). The Snowflake documentation can be found [here](https://docs.snowflake.com/en/). This course was taken in preparation for the "24C21 Snowflake Performance Automation and Tuning" course, available [here](https://www.snowflake.com/wp-content/uploads/2022/06/Performance-Automation-and-Tuning-3-Day.pdf). The course covers the following topics:
+This document contains notes for the SnowPro Core Certification course available at [Udemy](https://www.udemy.com/share/107srK3@7oBXnZzILRddmCPrD6_gfahyAsy1Vckxeh8lCT-OxVIOmA4F1RrOlQ40YMwFxm9LiA==/). The Snowflake documentation can be found at [Snowflake Documentation](https://docs.snowflake.com/en/). This course was taken in preparation for the *24C21 Snowflake Performance Automation and Tuning* course, available at [Snowflake Performance Automation and Tuning](https://www.snowflake.com/wp-content/uploads/2022/06/Performance-Automation-and-Tuning-3-Day.pdf). The course covers the following topics:
 
 1. Snowflake features and architecture
 2. Account access and security
