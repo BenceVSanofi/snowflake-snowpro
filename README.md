@@ -13,13 +13,16 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [High-Level Overview](#high-level-overview)
   - [Multi-Cluster Shared Data Architecture](#multi-cluster-shared-data-architecture)
     - [Storage Layer](#storage-layer)
-    - [Query Processing or Compute Layer](#query-processing-or-compute-layer)
+    - [Compute Layer (Query Processing)](#compute-layer-query-processing)
     - [Services Layer](#services-layer)
 - [Editions and Features](#editions-and-features)
 - [Object Model](#object-model)
   - [Organization](#organization)
   - [Account](#account)
   - [Database and Schema](#database-and-schema)
+- [Table and View Types](#table-and-view-types)
+  - [Table Types](#table-types)
+  - [View Types](#view-types)
 
 ## Introduction
 
@@ -131,7 +134,7 @@ This architecture stems from the fact that Snowflake was purpose-built for the c
 - **Storage is billed** by how much data is stored, based on a flat rate per TB calculated monthly.
 - **Data is not directly accessible** in the underlying blob storage, only via SQL commands.
 
-#### Query Processing or Compute Layer
+#### Compute Layer (Query Processing)
 
 This layer performs the processing tasks on the data gathered from the storage layer to answer user queries. It consists of Snowflake-managed compute clusters called **virtual warehouses**. A virtual warehouse is a Snowflake object you create via a SQL command.
 
@@ -278,3 +281,75 @@ Both databases and schemas must follow naming conventions: they must start with 
    ```
 
 The combination of a **database** and **schema** name (e.g., `my_database.my_schema`) forms a **namespace** in Snowflake. This namespace simplifies querying tables and objects within the schema. Alternatively, you can use the `USE` command to set the default database and schema for the session.
+
+## Table and View Types
+
+Tables are a logical abstraction over the data in the storage area. They describe the structure of your data to enable querying. Snowflake offers four types of tables, each with its own data retention requirements:
+
+### Table Types
+
+- **Permanent**
+  - **Default table type**.
+  - Exists until explicitly dropped.
+  - **Time-travel**: Up to 90 days (e.g., undropping a table).
+  - **Fail-safe**: 7 days (Snowflake can restore deleted data during this period).
+  
+- **Temporary**
+  - Used for **transitory data**, e.g., a step in a complex ETL process or storing the result of a query for downstream processing.
+  - Cannot be converted to another type of table.
+  - Persists only for the **duration of the session**.
+  - **Time-travel**: 1 day.
+  - **Fail-safe**: None.
+
+- **Transient**
+  - Exists until explicitly dropped.
+  - Designed for use cases where fail-safe is not required.
+  - **Time-travel**: 1 day.
+  - **Fail-safe**: None.
+
+- **External**
+  - Enables querying of data outside Snowflake, e.g., an Azure container, by overlaying a structure on this external data.
+  - **Read-only** table.
+  - **Time-travel**: Not available.
+  - **Fail-safe**: Not available.
+
+### View Types
+
+Views are **logical representations** of the data in tables. They do not store the data itself but instead store query definitions. Snowflake supports three types of views:
+
+- **Standard View**
+  - A logical object that stores a **SELECT query definition** (not the data itself).
+  - Does not contribute to storage costs.
+  - If the source table is dropped, querying the view returns an error.
+  - Often used to restrict or customize the contents of a table for users.
+  
+  ```sql
+  -- Create a standard view
+  CREATE VIEW MY_VIEW AS
+  SELECT COL1, COL2 FROM MY_TABLE;
+  ```
+
+- **Materialized View**
+  - Stores the **results of a query definition** and refreshes periodically.
+  - Known as a **pre-computed dataset** in Snowflake documentation.
+  - Incurs compute and storage costs:
+    - Compute: As a **serverless feature**, it refreshes in the background (outside of a user’s virtual warehouse).
+    - Storage: Costs are incurred for storing the materialized data.
+  - Typically used to **boost performance** when querying large or external tables.
+  
+   ```sql
+   -- Create a materialized view
+  CREATE MATERIALIZED VIEW MY_VIEW AS
+  SELECT COL1, COL2 FROM MY_TABLE;
+   ```
+
+- **Secure View**
+  - Both standard and materialized views can be secure.
+  - The **underlying query definition** is only visible to authorized users, e.g., by calling `GET DDL` or `DESCRIBE` on the view.
+  - Some query optimizations are bypassed to improve security.
+  
+   ```sql
+   -- Create a secure view
+  CREATE SECURE VIEW MY_VIEW AS
+  SELECT COL1, COL2 FROM MY_TABLE;
+   ```
