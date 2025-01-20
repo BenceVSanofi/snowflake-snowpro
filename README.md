@@ -42,6 +42,7 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [13.1. SnowSQL](#131-snowsql)
   - [13.2. Connectors and Drivers](#132-connectors-and-drivers)
   - [13.3. Snowflake Scripting](#133-snowflake-scripting)
+  - [Snowpark](#snowpark)
 
 ## 1. Introduction
 
@@ -806,3 +807,78 @@ Some key features of Snowflake Scripting include:
       RETURN TABLE(res);
    END;
    ```
+
+### Snowpark
+
+Snowpark is an API that allows users to interact with Snowflake **outside of the Snowflake interface**, enabling code to be written in **Scala**, **Java**, or **Python**. Snowpark provides methods for working with data, such as:
+
+- `select`
+- `join`
+- `group_by`
+- `distinct`
+- `drop`
+- `union`
+- `sort`
+
+Snowpark uses the **DataFrame abstraction**, similar to APIs like PySpark or Pandas, making it easier to manipulate large datasets. Function calls in Snowpark are **lazily evaluated** and leverage a **pushdown computation model**. This means that instead of pulling data into the client environment for computation, the computation is **pushed down** to the data source and performed using Snowflake’s compute resources.
+
+This contrasts with the **Snowflake Connector for Spark**, which pulls the data into the Spark cluster for computation, resulting in higher data transfer costs and potentially slower performance compared to Snowpark. The key features of Snowpark include:
+
+1. **Pushdown Computation**:
+   - All transformations (e.g., `select`, `filter`, `join`) are sent to Snowflake for execution using Snowflake's compute engine.
+   - Reduces data transfer and improves performance.
+
+2. **Lazy Evaluation**:
+   - Operations on DataFrames are **not executed immediately**. Execution only occurs when an action like `collect()` or `write()` is called.
+   - This ensures efficient query planning and execution.
+
+3. **DataFrame API**:
+   - Provides an easy-to-use, Pandas-like abstraction for interacting with Snowflake tables.
+
+4. **Support for Multiple Languages**:
+   - Code can be written in **Python**, **Scala**, or **Java**, enabling flexibility for developers with diverse skill sets.
+
+Below is an example of using the **Snowpark Python API** to interact with Snowflake and perform operations on data.
+
+```python
+from snowflake.snowpark.session import Session
+from snowflake.snowpark.functions import col, lit, avg
+
+# Define the Snowflake connection parameters
+connection_parameters = {
+    "account": "your_account_name",
+    "user": "your_username",
+    "password": "your_password",
+    "role": "your_role",
+    "warehouse": "your_warehouse",
+    "database": "your_database",
+    "schema": "your_schema"
+}
+
+# Create a Snowpark session
+session = Session.builder.configs(connection_parameters).create()
+
+# Load a table into a Snowpark DataFrame
+df = session.table("my_table")
+
+# Perform transformations
+filtered_df = df.filter(col("amount") > 100)  # Filter rows
+aggregated_df = filtered_df.group_by("category").agg(avg("amount").alias("avg_amount"))  # Aggregate data
+result_df = aggregated_df.sort(col("avg_amount").desc())  # Sort results
+
+# Show the results
+result_df.show()
+
+# Write the transformed data back to another table
+result_df.write.save_as_table("my_table_transformed", mode="overwrite")
+
+# Close the session
+session.close()
+```
+
+The key benefits of using Snowpark include:
+
+- **Performance**: With computation pushed to Snowflake, it minimizes data transfer and leverages Snowflake’s scalable compute power.
+- **Ease of Use**: The DataFrame API provides a familiar and intuitive interface for data manipulation.
+- **Flexibility**: Supports multiple languages (Python, Java, Scala) to cater to developers' preferences.
+- **Cost Efficiency**: Reduces the need for additional infrastructure like Spark clusters.
