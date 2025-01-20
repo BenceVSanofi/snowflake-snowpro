@@ -42,7 +42,12 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [13.1. SnowSQL](#131-snowsql)
   - [13.2. Connectors and Drivers](#132-connectors-and-drivers)
   - [13.3. Snowflake Scripting](#133-snowflake-scripting)
-  - [Snowpark](#snowpark)
+  - [13.4. Snowpark](#134-snowpark)
+- [14. \[SKIP\] Account Access and Security](#14-skip-account-access-and-security)
+- [15. Performance Concepts: Virtual Warehouses](#15-performance-concepts-virtual-warehouses)
+  - [15.1. Overview](#151-overview)
+  - [15.2. Virtual Warehouse Properties and Configuration](#152-virtual-warehouse-properties-and-configuration)
+  - [15.3. Warehouse State and Properties](#153-warehouse-state-and-properties)
 
 ## 1. Introduction
 
@@ -808,7 +813,7 @@ Some key features of Snowflake Scripting include:
    END;
    ```
 
-### Snowpark
+### 13.4. Snowpark
 
 Snowpark is an API that allows users to interact with Snowflake **outside of the Snowflake interface**, enabling code to be written in **Scala**, **Java**, or **Python**. Snowpark provides methods for working with data, such as:
 
@@ -882,3 +887,71 @@ The key benefits of using Snowpark include:
 - **Ease of Use**: The DataFrame API provides a familiar and intuitive interface for data manipulation.
 - **Flexibility**: Supports multiple languages (Python, Java, Scala) to cater to developers' preferences.
 - **Cost Efficiency**: Reduces the need for additional infrastructure like Spark clusters.
+
+## 14. [SKIP] Account Access and Security
+
+We skip this section as it is not relevant to the performance aspects of Snowflake.
+
+## 15. Performance Concepts: Virtual Warehouses
+
+In this section, we will cover the following topics:
+
+- Virtual Warehouse Introduction
+- Warehouse Configuration & Billing
+- Warehouse State & Properties
+- Resource Monitors
+- Multi-cluster Warehouses
+
+### 15.1. Overview
+
+A **Virtual Warehouse** is a named abstraction for a **Massively Parallel Processing (MPP)** compute cluster. These clusters are composed of worker nodes running on the chosen cloud platform.
+
+Virtual Warehouses are responsible for executing:
+
+- **DQL operations**: Queries like `SELECT`
+- **DML operations**: Modifications like `UPDATE`, `DELETE`
+- **Data loading operations**: Commands like `COPY INTO`
+
+As a user, you interact with the named warehouse object, **not the underlying compute resources**.
+
+Key features of Virtual Warehouses:
+
+1. You can spin up and shut down a virtually unlimited number of warehouses without resource contention.
+2. Warehouse configuration (e.g., size, scaling policy) can be changed **on-the-fly**.
+3. Virtual Warehouses include **local SSD storage**, referred to as the **warehouse cache**, which stores raw data retrieved from the storage layer. This can make subsequent queries faster by avoiding redundant reads from storage.
+
+Virtual Warehouses can be created via the Snowflake UI or SQL commands.
+
+### 15.2. Virtual Warehouse Properties and Configuration
+
+Below are examples of Virtual Warehouse operations with comments to clarify their purpose:
+
+```sql
+-- Drop an existing warehouse (if it exists):
+DROP WAREHOUSE MY_WAREHOUSE;
+
+-- Create a new warehouse named 'MY_MED_WH' with size MEDIUM:
+CREATE WAREHOUSE MY_MED_WH
+WAREHOUSE_SIZE = 'MEDIUM';
+
+-- Suspend a warehouse to stop compute usage (no credits consumed when suspended):
+ALTER WAREHOUSE MY_WH SUSPEND;
+
+-- Modify the size of an existing warehouse to MEDIUM:
+ALTER WAREHOUSE MY_WH_2 SET
+WAREHOUSE_SIZE = 'MEDIUM';
+
+-- Create a multi-cluster warehouse with 1 to 3 clusters and STANDARD scaling policy:
+CREATE WAREHOUSE MY_WH_3
+MIN_CLUSTER_COUNT = 1
+MAX_CLUSTER_COUNT = 3
+SCALING_POLICY = 'STANDARD';
+```
+
+### 15.3. Warehouse State and Properties
+
+Virtual Warehouses have the following states:
+
+- **Started**: The warehouse is running and can execute queries. In this state it consumes credits.
+- **Suspended**: The warehouse is stopped and does not consume credits.
+- **Resizing**: The warehouse is changing its size. A warehouse can be resized while running.
