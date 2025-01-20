@@ -34,6 +34,10 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [11.1. Tasks](#111-tasks)
   - [11.2. Streams](#112-streams)
   - [11.3. Using Tasks with Streams](#113-using-tasks-with-streams)
+- [12. Billing Overview](#12-billing-overview)
+  - [12.1. Compute Billing (Billed in Snowflake Credits)](#121-compute-billing-billed-in-snowflake-credits)
+  - [12.2. Data Storage and Transfer Billing (Billed by the Cloud Provider)](#122-data-storage-and-transfer-billing-billed-by-the-cloud-provider)
+  - [12.3. Key Differences: Cloud Services vs. Serverless Services](#123-key-differences-cloud-services-vs-serverless-services)
 
 ## 1. Introduction
 
@@ -613,3 +617,57 @@ WHERE METADATA$ACTION = 'INSERT';
 
 3. **Use Case**:
    - This combination of tasks and streams is ideal for implementing **incremental ETL pipelines**, where changes to a source table are tracked and processed continuously.
+
+## 12. Billing Overview
+
+In Snowflake, there are two types of pricing models:
+
+1. **On-demand pricing**: You pay for what you use, calculated based on actual consumption.
+2. **Capacity pricing**: You pay for usage upfront, often at a discounted rate compared to on-demand pricing.
+
+The account is billed in the following main areas.
+
+### 12.1. Compute Billing (Billed in Snowflake Credits)
+
+Compute billing covers services that utilize **Snowflake compute resources**. These costs are calculated in **Snowflake credits** and are categorized into the following:
+
+- **Virtual Warehouse Services**:
+  - Charges for compute resources used by virtual warehouses.
+  - Includes activities like query execution, data loading/unloading, and other operations performed by user-provisioned virtual warehouses.
+- **Cloud Services**:
+  - Charges for **always-on services** provided by Snowflake's cloud infrastructure.
+  - Includes metadata management, query optimization, authentication, and other system activities running in the **Cloud Services Layer**.
+  - Costs are predictable and typically a small percentage of the overall compute usage.
+- **Serverless Services**:
+  - Charges for **on-demand services** provided by Snowflake that do not require user-provisioned virtual warehouses.
+  - Examples include:
+    - Snowpipe for continuous data loading.
+    - Tasks or procedures that execute without a pre-defined warehouse.
+    - Materialized view maintenance.
+  - Unlike cloud services, these are billed based on the actual resources consumed for the operation.
+
+### 12.2. Data Storage and Transfer Billing (Billed by the Cloud Provider)
+
+Storage and transfer costs are typically billed directly by the cloud provider (AWS, GCP, or Azure) and depend on the following:
+
+- **Storage Services**:
+  - Charges for data stored in Snowflake's centralized storage layer.
+  - Includes structured and semi-structured data stored in tables, as well as file storage in Snowflake stages.
+  - Costs are billed based on the amount of data stored and the duration of storage (per TB per month).
+
+- **Data Transfer Services**:
+  - Charges for the movement of data **into or out of Snowflake**.
+  - Includes:
+    - **Ingress** (data loaded into Snowflake).
+    - **Egress** (data exported out of Snowflake or shared with other accounts or regions).
+    - Charges vary based on the volume of data transferred and the geographic regions involved.
+
+### 12.3. Key Differences: Cloud Services vs. Serverless Services
+
+| **Aspect**                | **Cloud Services**                                                                                 | **Serverless Services**                                                    |
+| ------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Definition**            | Always-on services like metadata management, query optimization, and authentication.               | On-demand compute services that Snowflake provisions dynamically.          |
+| **Billing**               | Charged as part of overall compute usage, typically a fixed percentage of virtual warehouse usage. | Charged based on the actual resources consumed for the specific operation. |
+| **Examples**              | Metadata queries, query parsing, user authentication, transaction coordination.                    | Snowpipe, serverless tasks, materialized view refreshes.                   |
+| **Resource Provisioning** | Runs on Snowflake's **Cloud Services Layer**.                                                      | Dynamically provisions resources on demand.                                |
+| **Usage Model**           | Passive and background services.                                                                   | Active and tied to specific serverless operations.                         |
