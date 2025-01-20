@@ -28,7 +28,12 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [8.2. External Functions](#82-external-functions)
 - [9. Stored Procedures](#9-stored-procedures)
   - [9.1. Stored Procedures in Snowflake](#91-stored-procedures-in-snowflake)
-- [10. UDF vs Stored Procedure](#10-udf-vs-stored-procedure)
+  - [9.2. UDF vs Stored Procedure](#92-udf-vs-stored-procedure)
+- [10. Sequences](#10-sequences)
+- [11. Tasks and Streams](#11-tasks-and-streams)
+  - [11.1. Tasks](#111-tasks)
+  - [11.2. Streams](#112-streams)
+  - [11.3. Using Tasks with Streams](#113-using-tasks-with-streams)
 
 ## 1. Introduction
 
@@ -493,7 +498,7 @@ CALL example_stored_procedure('MY_TABLE');
    - `EXECUTE AS OWNER`: The procedure runs with the privileges of the procedure owner.
    - `EXECUTE AS CALLER`: The procedure runs with the privileges of the caller.
 
-## 10. UDF vs Stored Procedure
+### 9.2. UDF vs Stored Procedure
 
 The key difference between User-Defined Functions (UDFs) and Stored Procedures is in their purpose:
 
@@ -514,3 +519,97 @@ In summary:
 
 - Use **stored procedures** when you need to **perform actions** such as database updates or automation tasks.
 - Use **UDFs** when you need to **return a value** that can be used in SQL queries.
+
+## 10. Sequences
+
+A **sequence** is a schema-level object used to generate **globally unique sequential numbers**. Sequences are commonly used for generating surrogate keys or other identifiers. However, note that sequences are **not guaranteed to be gapless** due to events like rollbacks or task failures.
+
+```sql
+-- Create a sequence
+CREATE SEQUENCE MY_SEQUENCE
+START = 1
+INCREMENT = 1;
+
+SELECT MY_SEQUENCE.NEXTVAL; -- Output: 1
+SELECT MY_SEQUENCE.NEXTVAL; -- Output: 2
+```
+
+## 11. Tasks and Streams
+
+### 11.1. Tasks
+
+A **task** is an object used to schedule the execution of a **SQL command** or a **stored procedure**. Tasks are often used to automate data processing workflows. To create a task, you need the `ACCOUNTADMIN` role or the `CREATE TASK` privilege. Here's an example:
+
+```sql
+-- Create a task
+CREATE TASK T1 -- Task name
+WAREHOUSE = MYWH -- Warehouse to use (can also use the serverless model)
+SCHEDULE = '30 MINUTE' -- Triggering mechanism
+AS
+COPY INTO MY_TABLE -- SQL command to execute
+FROM $MY_STAGE;
+
+-- Start the task:
+ALTER TASK T1 RESUME;
+
+-- Stop the task:
+ALTER TASK T1 SUSPEND;
+```
+
+1. **Execution Privileges**:
+   - To execute a task, you need the global privilege `EXECUTE TASK` as well as ownership or `OPERATE` privilege on the task object.
+
+2. **Task Dependencies (DAGs)**:
+   - Tasks can be **chained together** into a Directed Acyclic Graph (DAG).
+   - All tasks in a DAG must:
+     - Have the same owner.
+     - Be stored in the same database and schema.
+
+```sql
+-- Create a DAG of tasks
+CREATE TASK T2
+WAREHOUSE = MYWH
+AFTER T1 -- Chain the task to the previous task
+AS
+COPY INTO MY_TABLE FROM $MY_STAGE;
+```
+
+### 11.2. Streams
+
+A **stream** is a schema-level object that **captures changes** (DML events) to a table. Streams are used to **view and track changes** like inserts, updates, and deletes on a source table.
+
+```sql
+-- Create a stream
+CREATE STREAM MY_STREAM ON TABLE MY_TABLE;
+
+-- Query the stream
+SELECT * FROM MY_STREAM;
+```
+
+The query result contains the changes made to the source table, along with additional metadata.
+
+### 11.3. Using Tasks with Streams
+
+A common ETL pattern involves using a **stream** to capture changes to a table and then using a **task** to process these changes. This approach enables the creation of a **continuous ETL pipeline**.
+
+```sql
+-- Create a task to process the changes
+CREATE TASK PROCESS_CHANGES
+WAREHOUSE = MYWH
+SCHEDULE = '1 MINUTE'
+WHEN 
+SYSTEM$STREAM_HAS_DATA('MY_STREAM') -- Check if the stream has data
+AS 
+INSERT INTO MY_TABLE2(COL1, COL2)
+SELECT COL1, COL2 FROM MY_STREAM
+WHERE METADATA$ACTION = 'INSERT';
+```
+
+1. **Stream Data**:
+   - The result of querying a stream includes DML changes made to the source table, along with metadata such as the type of action (`INSERT`, `UPDATE`, `DELETE`).
+
+2. **System Function**:
+   - `SYSTEM$STREAM_HAS_DATA`: A boolean function that checks whether the stream contains new data to process.
+
+3. **Use Case**:
+   - This combination of tasks and streams is ideal for implementing **incremental ETL pipelines**, where changes to a source table are tracked and processed continuously.
