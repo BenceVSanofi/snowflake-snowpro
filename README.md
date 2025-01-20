@@ -38,6 +38,10 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [12.1. Compute Billing (Billed in Snowflake Credits)](#121-compute-billing-billed-in-snowflake-credits)
   - [12.2. Data Storage and Transfer Billing (Billed by the Cloud Provider)](#122-data-storage-and-transfer-billing-billed-by-the-cloud-provider)
   - [12.3. Key Differences: Cloud Services vs. Serverless Services](#123-key-differences-cloud-services-vs-serverless-services)
+- [13. Connectivity](#13-connectivity)
+  - [13.1. SnowSQL](#131-snowsql)
+  - [13.2. Connectors and Drivers](#132-connectors-and-drivers)
+  - [13.3. Snowflake Scripting](#133-snowflake-scripting)
 
 ## 1. Introduction
 
@@ -671,3 +675,134 @@ Storage and transfer costs are typically billed directly by the cloud provider (
 | **Examples**              | Metadata queries, query parsing, user authentication, transaction coordination.                    | Snowpipe, serverless tasks, materialized view refreshes.                   |
 | **Resource Provisioning** | Runs on Snowflake's **Cloud Services Layer**.                                                      | Dynamically provisions resources on demand.                                |
 | **Usage Model**           | Passive and background services.                                                                   | Active and tied to specific serverless operations.                         |
+
+## 13. Connectivity
+
+### 13.1. SnowSQL
+
+SnowSQL is Snowflake’s command-line client that allows users to interact with Snowflake via SQL. Using SnowSQL, users can:
+
+- Execute **DML Statements** (e.g., `INSERT`, `UPDATE`, `DELETE`, `MERGE`)
+- Execute **DDL Statements** (e.g., `CREATE`, `ALTER`)
+- Execute **DQL Statements** (e.g., `SELECT`)
+- Perform **Account Management** (e.g., setting account parameters)
+- Load and unload data to and from Snowflake
+
+### 13.2. Connectors and Drivers
+
+Snowflake provides a variety of connectors and drivers to integrate with external tools and platforms. These are classified into five main categories:
+
+1. **Business Intelligence (BI) Tools**:
+   - Tools for visualizing and analyzing data.
+   - Examples: Tableau, Power BI.
+
+2. **Data Integration Tools**:
+   - Tools for moving data between systems.
+   - Examples: dbt, Informatica.
+
+3. **Data Governance and Security Tools**:
+   - Tools for managing data access, security, and governance.
+   - Examples: Collibra, Datadog, Vault.
+
+4. **Machine Learning and Data Science Tools**:
+   - Tools for analyzing and modeling data.
+   - Examples: DataRobot, Dataiku, Amazon SageMaker.
+
+5. **SQL Development Tools and Management**:
+   - Tools for writing and executing SQL queries.
+   - Examples: SQLDBM, SeekWell, Agile Data Engine.
+
+### 13.3. Snowflake Scripting
+
+**Snowflake Scripting** is an extension of Snowflake SQL that introduces **procedural logic** to write stored procedures or execute procedural code outside of a stored procedure. This enables users to create more complex workflows and operations within Snowflake. Below is an overview of its features and syntax.
+
+A Snowflake Scripting block is structured as follows:
+
+```sql
+DECLARE
+   -- Variable declarations, cursor declarations, etc.
+BEGIN
+   -- Snowflake Scripting and SQL statements
+EXCEPTION
+   -- Statements for handling exceptions
+END;
+```
+
+Some key features of Snowflake Scripting include:
+
+1. **Variables**:
+   - You can declare variables and assign values within procedural code.
+
+   ```sql
+   CREATE PROCEDURE pythagoras()
+   RETURNS FLOAT
+   LANGUAGE SQL
+   AS
+   DECLARE
+      leg_a NUMBER(38, 2);
+      leg_b NUMBER(38, 2);
+      hypotenuse NUMBER(38, 5);
+   BEGIN
+      leg_a := 3;
+      leg_b := 4;
+      hypotenuse := SQRT(SQUARE(leg_a) + SQUARE(leg_b));
+      RETURN hypotenuse;
+   END;
+   ```
+
+2. **Control Structures**:
+   - Use `IF`, `ELSE`, and `CASE` for conditional logic.
+
+   ```sql
+   BEGIN
+      LET count := 4;
+      IF (count % 2 = 0) THEN
+         RETURN 'even value';
+      ELSE
+         RETURN 'odd value';
+      END IF;
+   END;
+   ```
+
+3. **Loops**:
+   - Support for looping constructs like `WHILE` and `FOR`.
+
+   ```sql
+   DECLARE
+      total INTEGER DEFAULT 0;
+      max_num INTEGER DEFAULT 10;
+   BEGIN
+      FOR i IN 1..max_num DO
+         total := total + i;
+      END FOR;
+      RETURN total;
+   END;
+   ```
+
+4. **Cursors**:
+   - Use cursors to iterate over result sets.
+
+   ```sql
+   DECLARE
+      total_amount FLOAT;
+      c1 CURSOR FOR SELECT amount FROM transactions;
+   BEGIN
+      total_amount := 0.0;
+      FOR record IN c1 DO
+         total_amount := total_amount + record.amount;
+      END FOR;
+      RETURN total_amount;
+   END;
+   ```
+
+5. **Result Sets**:
+   - Return multiple rows from a procedure using result sets.
+
+   ```sql
+   DECLARE
+      res RESULTSET;
+   BEGIN
+      res := (SELECT amount FROM transactions);
+      RETURN TABLE(res);
+   END;
+   ```
