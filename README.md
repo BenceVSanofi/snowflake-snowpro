@@ -26,6 +26,9 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
 - [8. User-Defined Functions (UDFs)](#8-user-defined-functions-udfs)
   - [8.1. UDFs in Other Languages](#81-udfs-in-other-languages)
   - [8.2. External Functions](#82-external-functions)
+- [9. Stored Procedures](#9-stored-procedures)
+  - [9.1. Stored Procedures in Snowflake](#91-stored-procedures-in-snowflake)
+- [10. UDF vs Stored Procedure](#10-udf-vs-stored-procedure)
 
 ## 1. Introduction
 
@@ -434,3 +437,80 @@ API_AWS_ROLE_ARN = 'arn:aws:iam::123456789012:role/my_cloud_account_role'
 API_ALLOWED_PREFIXES = ('https://ttu.execute-api.eu-west-2.amazonaws.com/')
 ENABLED = TRUE;
 ```
+
+## 9. Stored Procedures
+
+In Relational Database Management Systems (RDBMS), stored procedures are **named collections of SQL statements** that often contain procedural logic. They are generally used for administrative tasks. For example:
+
+```sql
+-- Create a stored procedure to delete old records from multiple tables:
+CREATE PROCEDURE clear_emp_tables() 
+AS 
+BEGIN
+   DELETE FROM EMP01 WHERE EMP_DATE < DATEADD(MONTH, -1, CURRENT_DATE);
+   DELETE FROM EMP02 WHERE EMP_DATE < DATEADD(MONTH, -1, CURRENT_DATE);
+   DELETE FROM EMP03 WHERE EMP_DATE < DATEADD(MONTH, -1, CURRENT_DATE);
+   DELETE FROM EMP04 WHERE EMP_DATE < DATEADD(MONTH, -1, CURRENT_DATE);
+   DELETE FROM EMP05 WHERE EMP_DATE < DATEADD(MONTH, -1, CURRENT_DATE);
+END;
+
+-- Execute the stored procedure:
+CALL clear_emp_tables();
+```
+
+### 9.1. Stored Procedures in Snowflake
+
+Stored procedures in Snowflake are **database objects** that allow you to perform complex operations, such as administrative tasks, data manipulation, and automation of workflows. Snowflake supports creating stored procedures using the following methods:
+
+- **JavaScript**: Write the procedural logic using JavaScript.
+- **Snowflake Scripting**: Extend SQL with procedural logic (e.g., loops, conditions).
+- **Snowpark**: Use Python, Java, or Scala to write stored procedures.
+
+Snowflake enables you to write stored procedures using **JavaScript**, which runs within Snowflake's procedural environment. Below is an example:
+
+```sql
+CREATE OR REPLACE PROCEDURE example_stored_procedure(param1 STRING) -- Identifier
+RETURNS STRING -- Return type
+LANGUAGE JAVASCRIPT -- Language option: JAVASCRIPT
+EXECUTE AS OWNER -- Authorization context: OWNER or CALLER
+AS
+$$
+   var tableName = param1;
+   var sql_command = "SELECT * FROM " + tableName; // Example query
+   var result = snowflake.execute({sqlText: sql_command}); // Execute the query
+   return "Query executed successfully on table: " + tableName;
+$$;
+
+-- Execute the stored procedure:
+CALL example_stored_procedure('MY_TABLE');
+```
+
+1. **Return Values**:
+   - Stored procedures in Snowflake **can return values** or perform actions without returning a result.
+   - In this example, the procedure returns a confirmation string.
+
+2. **Execution Context**:
+   - `EXECUTE AS OWNER`: The procedure runs with the privileges of the procedure owner.
+   - `EXECUTE AS CALLER`: The procedure runs with the privileges of the caller.
+
+## 10. UDF vs Stored Procedure
+
+The key difference between User-Defined Functions (UDFs) and Stored Procedures is in their purpose:
+
+- **Stored Procedures**:
+  - Perform **actions** rather than just returning values.
+  - Used for tasks such as:
+    - Administrative operations.
+    - Automating data manipulation.
+    - Managing workflows.
+  - Example use case: Deleting old records from multiple tables, as shown above.
+
+- **User-Defined Functions (UDFs)**:
+  - **Calculate values** and return results to the user.
+  - Used in **SQL queries** to compute or transform data.
+  - Example use case: Calculating the area of a circle from a table of radii.
+
+In summary:
+
+- Use **stored procedures** when you need to **perform actions** such as database updates or automation tasks.
+- Use **UDFs** when you need to **return a value** that can be used in SQL queries.
