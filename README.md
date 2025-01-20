@@ -1,7 +1,9 @@
 <!-- omit in toc -->
 # Snowflake SnowPro Core Certification
 
-Snowflake is a cloud-native data platform offered as a service. It provides services like storage, compute, and management, running across the three big cloud providers.
+This document contains notes and study materials to help you prepare for the **Snowflake SnowPro Core Certification Exam**. It covers key concepts, features, and architecture of Snowflake, as well as practical topics like query optimization, data loading, and performance tuning. The content is designed to serve as a reference for understanding Snowflake’s core functionality.
+
+Snowflake is a cloud-native **data platform** offered as a service (SaaS). It provides key services like **storage**, **compute**, and **management** and runs on the three major cloud providers: AWS, GCP, and Azure. Snowflake’s unique architecture allows it to handle diverse workloads such as data warehousing, data lakes, data engineering, and data science.
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -16,7 +18,11 @@ Snowflake is a cloud-native data platform offered as a service. It provides serv
 
 ## Introduction
 
-This document contains notes for the SnowPro Core Certification course available at [Udemy](https://www.udemy.com/share/107srK3@7oBXnZzILRddmCPrD6_gfahyAsy1Vckxeh8lCT-OxVIOmA4F1RrOlQ40YMwFxm9LiA==/). The Snowflake documentation can be found at [Snowflake Documentation](https://docs.snowflake.com/en/). This course was taken in preparation for the *24C21 Snowflake Performance Automation and Tuning* course, available at [Snowflake Performance Automation and Tuning](https://www.snowflake.com/wp-content/uploads/2022/06/Performance-Automation-and-Tuning-3-Day.pdf). The course covers the following topics:
+This document contains notes and study material for the **SnowPro Core Certification** course available on [Udemy](https://www.udemy.com/share/107srK3@7oBXnZzILRddmCPrD6_gfahyAsy1Vckxeh8lCT-OxVIOmA4F1RrOlQ40YMwFxm9LiA==/). The official Snowflake documentation is available at [Snowflake Docs](https://docs.snowflake.com/en/). 
+
+These notes were prepared as part of my study for the *24C21 Snowflake Performance Automation and Tuning* course, available at [Snowflake Performance Automation and Tuning](https://www.snowflake.com/wp-content/uploads/2022/06/Performance-Automation-and-Tuning-3-Day.pdf). 
+
+The course covers essential topics to help understand Snowflake's core functionalities and prepare for the certification exam. Topics include:
 
 1. Snowflake features and architecture
 2. Account access and security
