@@ -8,32 +8,32 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
 <!-- omit in toc -->
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Features and Architecture](#features-and-architecture)
-  - [High-Level Overview](#high-level-overview)
-  - [Multi-Cluster Shared Data Architecture](#multi-cluster-shared-data-architecture)
-    - [Storage Layer](#storage-layer)
-    - [Compute Layer (Query Processing)](#compute-layer-query-processing)
-    - [Services Layer](#services-layer)
-- [Editions and Features](#editions-and-features)
-- [Object Model](#object-model)
-  - [Organization](#organization)
-  - [Account](#account)
-  - [Database and Schema](#database-and-schema)
-- [Table and View Types](#table-and-view-types)
-  - [Table Types](#table-types)
-  - [View Types](#view-types)
-- [User-Defined Functions (UDFs)](#user-defined-functions-udfs)
-  - [UDFs in Other Languages](#udfs-in-other-languages)
-  - [External Functions](#external-functions)
+- [1. Introduction](#1-introduction)
+- [2. Features and Architecture](#2-features-and-architecture)
+  - [2.1. High-Level Overview](#21-high-level-overview)
+  - [2.2. Multi-Cluster Shared Data Architecture](#22-multi-cluster-shared-data-architecture)
+    - [2.2.1. Storage Layer](#221-storage-layer)
+    - [2.2.2. Compute Layer (Query Processing)](#222-compute-layer-query-processing)
+    - [2.2.3. Services Layer](#223-services-layer)
+- [3. Editions and Features](#3-editions-and-features)
+- [4. Object Model](#4-object-model)
+  - [4.1. Organization](#41-organization)
+  - [4.2. Account](#42-account)
+  - [4.3. Database and Schema](#43-database-and-schema)
+- [5. Table and View Types](#5-table-and-view-types)
+  - [5.1. Table Types](#51-table-types)
+  - [5.2. View Types](#52-view-types)
+- [6. User-Defined Functions (UDFs)](#6-user-defined-functions-udfs)
+  - [6.1. UDFs in Other Languages](#61-udfs-in-other-languages)
+  - [6.2. External Functions](#62-external-functions)
 
-## Introduction
+## 1. Introduction
 
 This document contains notes and study material for the **SnowPro Core Certification** course available on [Udemy](https://www.udemy.com/share/107srK3@7oBXnZzILRddmCPrD6_gfahyAsy1Vckxeh8lCT-OxVIOmA4F1RrOlQ40YMwFxm9LiA==/). The official Snowflake documentation is available at [Snowflake Docs](https://docs.snowflake.com/en/).
 
 These notes were prepared as part of my study for the *24C21 Snowflake Performance Automation and Tuning* course, available at [Snowflake Performance Automation and Tuning](https://www.snowflake.com/wp-content/uploads/2022/06/Performance-Automation-and-Tuning-3-Day.pdf).
 
-## Features and Architecture
+## 2. Features and Architecture
 
 Snowflake (SF) is a SaaS platform that provides services such as storage, compute, and management across AWS, GCP, and Azure. **25% to 30%** of the certification exam will be on this topic. It consists of:
 
@@ -45,7 +45,7 @@ Snowflake (SF) is a SaaS platform that provides services such as storage, comput
 - Account billing
 - Connectivity
 
-### High-Level Overview
+### 2.1. High-Level Overview
 
 Snowflake is a cloud-native data platform offered as a service. Calling Snowflake a data platform (rather than a data warehouse) points out that Snowflake has features and capabilities beyond those of a traditional data warehouse. It supports additional workloads like data science and features like native processing of semi-structured data similar to a data lake. Here are some features:
 
@@ -84,7 +84,7 @@ Snowflake is a cloud-native solution, i.e., Snowflake's software is purpose-buil
 
 As a SaaS platform, Snowflake requires no management of hardware. Users do not perform any manual updates; instead, Snowflake applies transparent updates and patches with no visible downtime. You pay based on usage in a subscription payment model. Access is done via the web UI, and there are connectors and drivers for programmatic access. Optimizations are performed automatically as part of the loading process by Snowflake.
 
-### Multi-Cluster Shared Data Architecture
+### 2.2. Multi-Cluster Shared Data Architecture
 
 There are basically two ways to arrange hardware and networks into distributed computing architectures:
 
@@ -125,7 +125,7 @@ This architecture stems from the fact that Snowflake was purpose-built for the c
 - Three infinitely scalable layers
 - Workload isolation with virtual warehouses (e.g., analytics and pipeline jobs don’t have to contend for resources)
 
-#### Storage Layer
+#### 2.2.1. Storage Layer
 
 - The storage layer is **persistent and infinitely scalable cloud storage**, residing in cloud providers' blob storage services such as AWS S3. Snowflake users, by proxy, benefit from the availability and durability guarantees of the cloud providers' blob storage. Data loaded into Snowflake is organized into databases and schemas and is accessible primarily as tables. All table data is stored in the centralized storage layer, acting as a single source of truth.
 - Both structured and semi-structured data files can be loaded and stored in Snowflake.
@@ -137,7 +137,7 @@ This architecture stems from the fact that Snowflake was purpose-built for the c
 - **Storage is billed** by how much data is stored, based on a flat rate per TB calculated monthly.
 - **Data is not directly accessible** in the underlying blob storage, only via SQL commands.
 
-#### Compute Layer (Query Processing)
+#### 2.2.2. Compute Layer (Query Processing)
 
 This layer performs the processing tasks on the data gathered from the storage layer to answer user queries. It consists of Snowflake-managed compute clusters called **virtual warehouses**. A virtual warehouse is a Snowflake object you create via a SQL command.
 
@@ -159,7 +159,7 @@ Virtual warehouses are **ephemeral** and **highly flexible**:
 - Virtual warehouses come in multiple "t-shirt" sizes indicating their relative compute power (from X-Small to 6X-Large). The size of the warehouse determines the number of nodes in the cluster and the amount of memory and CPU available to the cluster. The size of the warehouse also determines the cost of the warehouse.
 - All running virtual warehouses have consistent access to the same data in the storage layer. Note that Snowflake uses strict ACID compliance to ensure data consistency across all virtual warehouses (this is managed by the **transaction manager** service in the services layer).
 
-#### Services Layer
+#### 2.2.3. Services Layer
 
 The services layer is a collection of **highly available and scalable services** that coordinate activities such as authentication, query optimization, and overall system management across all Snowflake accounts. This **global multi-tenant layer** is responsible for managing the virtual warehouses and the storage layer. It enables Snowflake to avoid creating a separate instance for each account (resulting in **economies of scale**) and facilitates **secure data sharing** between accounts.
 
@@ -174,7 +174,7 @@ Services managed by this layer include:
 - **Query parsing and optimization**
 - **Security**
 
-## Editions and Features
+## 3. Editions and Features
 
 Snowflake offers four **editions**, each tailored to specific needs and budgets. These editions differ in their features, capabilities, and pricing models:
 
@@ -192,7 +192,7 @@ Snowflake offers four **editions**, each tailored to specific needs and budgets.
    - Includes all features of the Business Critical edition
    - Provides the highest level of security for governmental bodies and financial institutions by operating in a dedicated environment
 
-## Object Model
+## 4. Object Model
 
 The core objects in Snowflake are structured in a logical hierarchy with a **1:N relationship**. Every object in Snowflake is **securable**, meaning privileges (e.g., read, write) can be granted to roles, which are then assigned to users. This determines what users can do within Snowflake. Additionally, every object can be interacted with via SQL.
 
@@ -217,7 +217,7 @@ The core objects in Snowflake are structured in a logical hierarchy with a **1:N
   - Task
   - Stream
 
-### Organization
+### 4.1. Organization
 
 Organizations are used to:
 
@@ -231,7 +231,7 @@ To set up an organization, you must contact Snowflake support, provide the organ
 - Enable cross-account features, e.g., set up database replication for an account.
 - Monitor account usage by querying the `ORGANIZATION_USAGE` schema in the Snowflake database.
 
-### Account
+### 4.2. Account
 
 An **account** is the administrative unit for a collection of storage, compute, and cloud services, deployed and managed entirely on a selected cloud platform. Each account has the following characteristics:
 
@@ -242,7 +242,7 @@ An **account** is the administrative unit for a collection of storage, compute, 
 
 The **account identifier** is a concatenation of the account locator, region ID, and cloud provider. Alternatively, you can use the concatenation of the organization name and account name.
 
-### Database and Schema
+### 4.3. Database and Schema
 
 Both databases and schemas must follow naming conventions: they must start with an alphabetic character and cannot contain spaces or special characters unless enclosed in double quotes (in which case they become case-sensitive).
 
@@ -285,11 +285,11 @@ Both databases and schemas must follow naming conventions: they must start with 
 
 The combination of a **database** and **schema** name (e.g., `my_database.my_schema`) forms a **namespace** in Snowflake. This namespace simplifies querying tables and objects within the schema. Alternatively, you can use the `USE` command to set the default database and schema for the session.
 
-## Table and View Types
+## 5. Table and View Types
 
 Tables are a logical abstraction over the data in the storage area. They describe the structure of your data to enable querying. Snowflake offers four types of tables, each with its own data retention requirements:
 
-### Table Types
+### 5.1. Table Types
 
 - **Permanent**
   - **Default table type**.
@@ -316,7 +316,7 @@ Tables are a logical abstraction over the data in the storage area. They describ
   - **Time-travel**: Not available.
   - **Fail-safe**: Not available.
 
-### View Types
+### 5.2. View Types
 
 Views are **logical representations** of the data in tables. They do not store the data itself but instead store query definitions. Snowflake supports three types of views:
 
@@ -357,7 +357,7 @@ Views are **logical representations** of the data in tables. They do not store t
   SELECT COL1, COL2 FROM MY_TABLE;
    ```
 
-## User-Defined Functions (UDFs)
+## 6. User-Defined Functions (UDFs)
 
 User-Defined Functions (UDFs) are **schema-level objects** that allow users to write custom functions in the following languages:
 
@@ -381,7 +381,7 @@ from my_table;
 
 UDFs are distinct from stored procedures in that UDFs can be used directly within SQL queries, whereas stored procedures **cannot** be used as part of a SQL statement.
 
-### UDFs in Other Languages
+### 6.1. UDFs in Other Languages
 
 Snowflake supports writing **JavaScript UDFs**, offering additional flexibility by enabling the use of high-level programming features. Key points to note about JavaScript UDFs:
 
@@ -408,7 +408,7 @@ $$;
 
 In addition to SQL and JavaScript, you can write UDFs in **Python** and **Java**. These languages offer more flexibility for complex logic and integrations.
 
-### External Functions
+### 6.2. External Functions
 
 Snowflake also supports **external functions**, which allow you to call code maintained and executed **outside of Snowflake**. This is a powerful feature that addresses some limitations of internal UDFs.
 
