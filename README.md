@@ -23,6 +23,9 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
 - [Table and View Types](#table-and-view-types)
   - [Table Types](#table-types)
   - [View Types](#view-types)
+- [User-Defined Functions (UDFs)](#user-defined-functions-udfs)
+  - [UDFs in Other Languages](#udfs-in-other-languages)
+  - [External Functions](#external-functions)
 
 ## Introduction
 
@@ -353,3 +356,81 @@ Views are **logical representations** of the data in tables. They do not store t
   CREATE SECURE VIEW MY_VIEW AS
   SELECT COL1, COL2 FROM MY_TABLE;
    ```
+
+## User-Defined Functions (UDFs)
+
+User-Defined Functions (UDFs) are **schema-level objects** that allow users to write custom functions in the following languages:
+
+- SQL
+- JavaScript
+- Python
+- Java
+
+UDFs accept **zero or more parameters** and can return either **scalar** or **tabular results** (via User-Defined Table Functions or UDTFs). UDFs can be called directly as part of a SQL statement. Additionally, UDFs support **overloading**, meaning you can define multiple UDFs with the same name but different parameter lists.
+
+```sql
+create function area_of_circle(radius float)
+returns float
+as $$
+   pi() * radius * radius
+$$;
+
+select area_of_circle(col)
+from my_table;
+```
+
+UDFs are distinct from stored procedures in that UDFs can be used directly within SQL queries, whereas stored procedures **cannot** be used as part of a SQL statement.
+
+### UDFs in Other Languages
+
+Snowflake supports writing **JavaScript UDFs**, offering additional flexibility by enabling the use of high-level programming features. Key points to note about JavaScript UDFs:
+
+- **Language Parameter**: Specify JavaScript as the language when creating the UDF.
+- **Recursion**: JavaScript UDFs can refer to themselves recursively.
+- **Type Mapping**: Snowflake data types are automatically mapped to JavaScript data types.
+
+```sql
+create function js_factorial(D double)
+returns double
+language javascript
+as $$
+   if (D <= 0) {
+      return 1;
+   } else {
+      var result = 1;
+      for (var i = 2; i <= D; i++) {
+         result *= i;
+      }
+      return result;
+   }
+$$;
+```
+
+In addition to SQL and JavaScript, you can write UDFs in **Python** and **Java**. These languages offer more flexibility for complex logic and integrations.
+
+### External Functions
+
+Snowflake also supports **external functions**, which allow you to call code maintained and executed **outside of Snowflake**. This is a powerful feature that addresses some limitations of internal UDFs.
+
+- External functions require the creation of an **API integration object** to define the external API endpoint.
+- They are slower than internal UDFs but much more flexible.
+- Currently, external functions are limited to **scalar functions** and cannot return tabular results.
+- External functions are **not sharable**, less secure, and may incur **egress charges**.
+- External functions are slower than internal UDFs.
+- They offer flexibility by enabling the integration of external services.
+- They are **less secure** and are subject to egress charges.
+
+```sql
+create or replace external function calc_sentiment(string_col varchar)  -- Function name and input parameter
+returns variant  -- Return type
+api_integration = aws_api_integration  -- Integration object
+as 'https://ttu.execute-api.eu-west-2.amazonaws.com/'  -- URL Proxy Service
+;
+
+-- API Integration Object:
+CREATE OR REPLACE API INTEGRATION aws_api_integration
+API_PROVIDER = 'aws_api_gateway'
+API_AWS_ROLE_ARN = 'arn:aws:iam::123456789012:role/my_cloud_account_role'
+API_ALLOWED_PREFIXES = ('https://ttu.execute-api.eu-west-2.amazonaws.com/')
+ENABLED = TRUE;
+```
