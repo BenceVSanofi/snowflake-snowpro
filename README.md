@@ -46,8 +46,9 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
 - [14. \[SKIP\] Account Access and Security](#14-skip-account-access-and-security)
 - [15. Performance Concepts: Virtual Warehouses](#15-performance-concepts-virtual-warehouses)
   - [15.1. Overview](#151-overview)
-  - [15.2. Virtual Warehouse Properties and Configuration](#152-virtual-warehouse-properties-and-configuration)
-  - [15.3. Warehouse State and Properties](#153-warehouse-state-and-properties)
+  - [15.2. Warehouse State and Properties](#152-warehouse-state-and-properties)
+    - [15.2.1. Managing Warehouse States](#1521-managing-warehouse-states)
+    - [15.2.2. Summary of Key Warehouse Parameters](#1522-summary-of-key-warehouse-parameters)
 
 ## 1. Introduction
 
@@ -920,11 +921,7 @@ Key features of Virtual Warehouses:
 2. Warehouse configuration (e.g., size, scaling policy) can be changed **on-the-fly**.
 3. Virtual Warehouses include **local SSD storage**, referred to as the **warehouse cache**, which stores raw data retrieved from the storage layer. This can make subsequent queries faster by avoiding redundant reads from storage.
 
-Virtual Warehouses can be created via the Snowflake UI or SQL commands.
-
-### 15.2. Virtual Warehouse Properties and Configuration
-
-Below are examples of Virtual Warehouse operations with comments to clarify their purpose:
+Virtual Warehouses can be created via the Snowflake UI or SQL commands. Below are examples of Virtual Warehouse operations with comments to clarify their purpose:
 
 ```sql
 -- Drop an existing warehouse (if it exists):
@@ -948,10 +945,68 @@ MAX_CLUSTER_COUNT = 3
 SCALING_POLICY = 'STANDARD';
 ```
 
-### 15.3. Warehouse State and Properties
+### 15.2. Warehouse State and Properties
 
-Virtual Warehouses have the following states:
+Virtual Warehouses in Snowflake can exist in the following states:
 
-- **Started**: The warehouse is running and can execute queries. In this state it consumes credits.
-- **Suspended**: The warehouse is stopped and does not consume credits.
-- **Resizing**: The warehouse is changing its size. A warehouse can be resized while running.
+1. **Started**:  
+   - The warehouse is running and can execute queries.  
+   - **Credits are consumed** while the warehouse is in this state.  
+
+2. **Suspended**:  
+   - The warehouse is stopped and does **not consume credits**.  
+
+3. **Resizing**:  
+   - The warehouse is actively changing its size.  
+   - Resizing can occur while the warehouse is running.  
+
+#### 15.2.1. Managing Warehouse States
+
+You can manually **suspend** or **resume** a warehouse using the `ALTER WAREHOUSE` command.
+
+```sql
+-- By default, a warehouse is started when created
+CREATE WAREHOUSE my_wh WITH WAREHOUSE_SIZE = 'SMALL';
+
+-- Suspend the warehouse
+ALTER WAREHOUSE my_wh SUSPEND;
+
+-- Resume the warehouse
+ALTER WAREHOUSE my_wh RESUME;
+```
+
+By default, a warehouse is **started** upon creation. To create a warehouse that starts in a suspended state, use the `INITIALLY_SUSPENDED` parameter.
+
+```sql
+-- Create a warehouse that is initially suspended
+CREATE WAREHOUSE my_wh INITIALLY_SUSPENDED = TRUE;
+```
+
+Creating a warehouse in a suspended state is useful when you need to perform preparatory tasks (e.g., creating tables) before starting the warehouse. Table creation does **not require** a running warehouse.
+
+To automatically suspend a warehouse after a period of inactivity, use the `AUTO_SUSPEND` parameter.
+
+```sql
+-- Specify the number of seconds of inactivity before automatic suspension
+-- Minimum value: 60 seconds, Default value: 600 seconds
+ALTER WAREHOUSE my_wh SET AUTO_SUSPEND = 600;
+```
+
+- Suspending a warehouse **clears the cache**, so the next query will have to fetch data from the storage layer, which may result in longer query times.  
+- Frequently suspending and resuming warehouses can result in **provisioning delays** (usually a few seconds) and may lead to unnecessary costs since **warehouses are billed for a minimum of 60 seconds** per usage cycle.
+
+To automatically resume a warehouse when a query is submitted, use the `AUTO_RESUME` parameter.
+
+```sql
+-- Enable automatic resume when a query is submitted
+-- Default value: TRUE
+ALTER WAREHOUSE my_wh SET AUTO_RESUME = TRUE;
+```
+
+#### 15.2.2. Summary of Key Warehouse Parameters
+
+| **Parameter**         | **Description**                                                                         | **Default Value** |
+| --------------------- | --------------------------------------------------------------------------------------- | ----------------- |
+| `AUTO_SUSPEND`        | Automatically suspends a warehouse after a specified period of inactivity (in seconds). | 600 seconds       |
+| `AUTO_RESUME`         | Automatically resumes a warehouse when a query is submitted.                            | TRUE              |
+| `INITIALLY_SUSPENDED` | Specifies whether a warehouse should start in a suspended state.                        | FALSE             |
