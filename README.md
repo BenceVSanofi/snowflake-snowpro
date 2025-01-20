@@ -15,6 +15,8 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
     - [Storage Layer](#storage-layer)
     - [Query Processing or Compute Layer](#query-processing-or-compute-layer)
     - [Services Layer](#services-layer)
+- [Snowflake Editions and Features](#snowflake-editions-and-features)
+- [Snowflake Object Model and Catalog](#snowflake-object-model-and-catalog)
 
 ## Introduction
 
@@ -160,15 +162,40 @@ Virtual warehouses are **ephemeral** and **highly flexible**:
 
 #### Services Layer
 
-The services layer is a collection of **highly available and scalable services** that coordinate activities such as authentication and query optimization across all Snowflake accounts.
+The services layer is a collection of **highly available and scalable services** that coordinate activities such as authentication, query optimization, and overall system management across all Snowflake accounts. This **global multi-tenant layer** is responsible for managing the virtual warehouses and the storage layer. It enables Snowflake to avoid creating a separate instance for each account (resulting in **economies of scale**) and facilitates **secure data sharing** between accounts.
 
-Similar to the underlying virtual warehouse resources, the services layer also runs on cloud compute instances.
+Similar to the underlying virtual warehouse resources, the services layer also runs on cloud compute instances. Note that users have **no direct control** over the services layer—it is fully managed by Snowflake.
 
 Services managed by this layer include:
 
-- **Authentication & Access Control**
-- **Infrastructure Management**
-- **Transaction Management**
-- **Metadata Management**
-- **Query Parsing and Optimization**
+- **Authentication and access control**
+- **Infrastructure management**
+- **Transaction management** to ensure ACID compliance
+- **Metadata management** to store information about databases, tables, and users
+- **Query parsing and optimization**
 - **Security**
+
+## Snowflake Editions and Features
+
+Snowflake offers four **editions**, each tailored to specific needs and budgets. These editions differ in their features, capabilities, and pricing models:
+
+1. **Standard**
+   - ANSI standard SQL
+   - ACID-compliant transactions
+   - Continuous data protection (e.g., time travel and network policies)
+2. **Enterprise**
+   - Includes all features of the Standard edition
+   - Designed for enterprise needs (e.g., multi-cluster warehouses and database failover capabilities)
+3. **Business Critical**
+   - Includes all features of the Enterprise edition
+   - Adds enhanced security and higher levels of data protection to support organizations with very sensitive data
+4. **Virtual Private Snowflake (VPS)**
+   - Includes all features of the Business Critical edition
+   - Provides the highest level of security for governmental bodies and financial institutions by operating in a dedicated environment
+
+## Snowflake Object Model and Catalog
+
+The core objects in Snowflake are structured in a logical hierarchy:
+
+- **Organizations**: A logical grouping of accounts
+- **Accounts**: A logical grouping of resources
