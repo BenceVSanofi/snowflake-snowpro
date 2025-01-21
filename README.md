@@ -63,6 +63,7 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
     - [15.6.1. Query Acceleration Eligibility](#1561-query-acceleration-eligibility)
     - [15.6.2. Verifying Query Acceleration Eligibility](#1562-verifying-query-acceleration-eligibility)
     - [15.6.3. Example Usage](#1563-example-usage)
+- [16. Performance Concepts: Query Optimization](#16-performance-concepts-query-optimization)
 
 ## 1. Introduction
 
@@ -1230,3 +1231,7 @@ WHERE QUERY_ID = '<your_query_id>';
 -- Estimate the acceleration level for a specific query
 SELECT SYSTEM$ESTIMATE_QUERY_ACCELERATION('<your_query_id>') AS acceleration_estimate;
 ```
+
+## 16. Performance Concepts: Query Optimization
+
+See presentation and hands-on queries for details.
