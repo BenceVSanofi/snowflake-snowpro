@@ -52,13 +52,17 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [15.3. Warehouse Size and Billing](#153-warehouse-size-and-billing)
   - [15.4. Resource Monitors](#154-resource-monitors)
     - [15.4.1. Best Practices for Warehouse Size and Resource Monitors](#1541-best-practices-for-warehouse-size-and-resource-monitors)
-  - [Scaling Up and Out: Multi-Cluster Warehouses](#scaling-up-and-out-multi-cluster-warehouses)
-    - [Scaling Up a Virtual Warehouse](#scaling-up-a-virtual-warehouse)
-    - [Scaling Out: Multi-Cluster Warehouses](#scaling-out-multi-cluster-warehouses)
-    - [Scaling Policies](#scaling-policies)
-    - [Credit Consumption in Multi-Cluster Warehouses](#credit-consumption-in-multi-cluster-warehouses)
-    - [Concurrency Behavior Properties](#concurrency-behavior-properties)
-    - [Examples of Multi-Cluster Warehouse Configuration](#examples-of-multi-cluster-warehouse-configuration)
+  - [15.5. Scaling Up and Out: Multi-Cluster Warehouses](#155-scaling-up-and-out-multi-cluster-warehouses)
+    - [15.5.1. Scaling Up a Virtual Warehouse](#1551-scaling-up-a-virtual-warehouse)
+    - [15.5.2. Scaling Out: Multi-Cluster Warehouses](#1552-scaling-out-multi-cluster-warehouses)
+    - [15.5.3. Scaling Policies](#1553-scaling-policies)
+    - [15.5.4. Credit Consumption in Multi-Cluster Warehouses](#1554-credit-consumption-in-multi-cluster-warehouses)
+    - [15.5.5. Concurrency Behavior Properties](#1555-concurrency-behavior-properties)
+    - [15.5.6. Examples of Multi-Cluster Warehouse Configuration](#1556-examples-of-multi-cluster-warehouse-configuration)
+  - [15.6. Query Acceleration Service](#156-query-acceleration-service)
+    - [15.6.1. Query Acceleration Eligibility](#1561-query-acceleration-eligibility)
+    - [15.6.2. Verifying Query Acceleration Eligibility](#1562-verifying-query-acceleration-eligibility)
+    - [15.6.3. Example Usage](#1563-example-usage)
 
 ## 1. Introduction
 
@@ -1082,9 +1086,9 @@ ALTER ACCOUNT SET RESOURCE_MONITOR = ANALYSIS_RM;
    - Use Resource Monitors to set credit limits and enforce cost controls.
    - Configure appropriate triggers to notify users and prevent unexpected charges.
 
-### Scaling Up and Out: Multi-Cluster Warehouses
+### 15.5. Scaling Up and Out: Multi-Cluster Warehouses
 
-#### Scaling Up a Virtual Warehouse
+#### 15.5.1. Scaling Up a Virtual Warehouse
 
 - **Scaling up** a Virtual Warehouse involves resizing it to a larger size, which can improve **query performance**.
 - Virtual Warehouses can be manually resized through the **Snowflake UI** or **SQL commands**.
@@ -1095,7 +1099,7 @@ ALTER ACCOUNT SET RESOURCE_MONITOR = ANALYSIS_RM;
   - Removes compute resources.
   - **Clears the warehouse cache**, which may result in longer query times for subsequent queries.
 
-#### Scaling Out: Multi-Cluster Warehouses
+#### 15.5.2. Scaling Out: Multi-Cluster Warehouses
 
 A **multi-cluster warehouse** is a group of Virtual Warehouses that can automatically **scale in and out** based on query demand and concurrency levels.
 
@@ -1113,7 +1117,7 @@ The key parameters for configuring a multi-cluster warehouse are:
 - **AUTO-SCALE Mode**:
   - If `MIN_CLUSTER_COUNT` and `MAX_CLUSTER_COUNT` are set to different values, the multi-cluster warehouse will **scale in and out** dynamically based on demand.
 
-#### Scaling Policies
+#### 15.5.3. Scaling Policies
 
 Multi-cluster warehouses operate under one of two scaling policies:
 
@@ -1131,14 +1135,14 @@ Multi-cluster warehouses operate under one of two scaling policies:
      - Every minute, a background process checks if the load on the least busy warehouse can be redistributed.
      - If this condition is met for **6 consecutive minutes**, the least busy warehouse is marked for **shutdown**.
 
-#### Credit Consumption in Multi-Cluster Warehouses
+#### 15.5.4. Credit Consumption in Multi-Cluster Warehouses
 
 - The **total credit cost** of a multi-cluster warehouse is the sum of all the individual running warehouses in the group.
 - The **maximum credits consumed** by a multi-cluster warehouse are calculated as:
   - `(Number of warehouses) × (Hourly credit rate of warehouse size)`.
 - Since multi-cluster warehouses dynamically scale based on demand, the actual credit usage is usually **a fraction of the maximum consumption**.
 
-#### Concurrency Behavior Properties
+#### 15.5.5. Concurrency Behavior Properties
 
 Multi-cluster warehouses include parameters to manage query concurrency and timeouts:
 
@@ -1153,7 +1157,7 @@ Multi-cluster warehouses include parameters to manage query concurrency and time
 3. **STATEMENT_TIMEOUT_IN_SECONDS**:
    - Specifies the **time (in seconds)** after which a running SQL statement is **aborted** on a warehouse.
 
-#### Examples of Multi-Cluster Warehouse Configuration
+#### 15.5.6. Examples of Multi-Cluster Warehouse Configuration
 
 Below are SQL examples of configuring a multi-cluster warehouse with comments explaining the parameters:
 
@@ -1179,6 +1183,50 @@ SET SCALING_POLICY = 'ECONOMY';
 -- Suspend the warehouse to stop compute usage
 ALTER WAREHOUSE MY_MULTI_WH SUSPEND;
 
--- Resume the warehouse to start it again
+-- Resume the warehouse to start it ag ain
 ALTER WAREHOUSE MY_MULTI_WH RESUME;
+```
+
+### 15.6. Query Acceleration Service
+
+The **Query Acceleration Service** is a Snowflake feature designed to **dynamically add serverless compute power** to a Virtual Warehouse when a **complex query** requires additional resources. This service improves query performance by **offloading parts of the query plan** that can be executed in parallel to **serverless compute nodes** provisioned on-demand.
+
+- Snowflake **analyzes the query plan** and identifies fragments of the query that:
+  1. **Can be run in parallel**.
+  2. **Involve large numbers of partitions to be scanned**.
+- These query fragments are then offloaded to dynamically provisioned **serverless compute resources**, reducing the load on the main warehouse and accelerating the query execution.
+
+#### 15.6.1. Query Acceleration Eligibility
+
+For a query to be accelerated using the Query Acceleration Service, it must meet the following conditions:
+
+1. **Parallelizable Query Plan**:
+   - At least part of the query plan must be able to run in parallel.
+2. **Partition Scanning**:
+   - The query must involve **sufficient partitions** to justify the use of additional compute resources.
+
+#### 15.6.2. Verifying Query Acceleration Eligibility
+
+Snowflake provides the following tools to verify whether a query is eligible for acceleration:
+
+1. **`QUERY_ACCELERATION_ELIGIBLE` View**:
+   - This system view provides details about whether a query is eligible for query acceleration.
+
+2. **`SYSTEM$ESTIMATE_QUERY_ACCELERATION` Function**:
+   - This function estimates the level of query acceleration needed for a given query. It evaluates:
+     - The number of partitions being scanned.
+     - Whether the query plan can be parallelized.
+
+#### 15.6.3. Example Usage
+
+Here are examples of how to use Snowflake's Query Acceleration tools:
+
+```sql
+-- Check if a specific query is eligible for acceleration using the system view
+SELECT QUERY_ID, QUERY_TEXT, ELIGIBLE
+FROM QUERY_ACCELERATION_ELIGIBLE
+WHERE QUERY_ID = '<your_query_id>';
+
+-- Estimate the acceleration level for a specific query
+SELECT SYSTEM$ESTIMATE_QUERY_ACCELERATION('<your_query_id>') AS acceleration_estimate;
 ```
