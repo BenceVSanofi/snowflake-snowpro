@@ -52,6 +52,13 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [15.3. Warehouse Size and Billing](#153-warehouse-size-and-billing)
   - [15.4. Resource Monitors](#154-resource-monitors)
     - [15.4.1. Best Practices for Warehouse Size and Resource Monitors](#1541-best-practices-for-warehouse-size-and-resource-monitors)
+  - [Scaling Up and Out: Multi-Cluster Warehouses](#scaling-up-and-out-multi-cluster-warehouses)
+    - [Scaling Up a Virtual Warehouse](#scaling-up-a-virtual-warehouse)
+    - [Scaling Out: Multi-Cluster Warehouses](#scaling-out-multi-cluster-warehouses)
+    - [Scaling Policies](#scaling-policies)
+    - [Credit Consumption in Multi-Cluster Warehouses](#credit-consumption-in-multi-cluster-warehouses)
+    - [Concurrency Behavior Properties](#concurrency-behavior-properties)
+    - [Examples of Multi-Cluster Warehouse Configuration](#examples-of-multi-cluster-warehouse-configuration)
 
 ## 1. Introduction
 
@@ -1074,3 +1081,104 @@ ALTER ACCOUNT SET RESOURCE_MONITOR = ANALYSIS_RM;
 3. **Resource Monitors**:
    - Use Resource Monitors to set credit limits and enforce cost controls.
    - Configure appropriate triggers to notify users and prevent unexpected charges.
+
+### Scaling Up and Out: Multi-Cluster Warehouses
+
+#### Scaling Up a Virtual Warehouse
+
+- **Scaling up** a Virtual Warehouse involves resizing it to a larger size, which can improve **query performance**.
+- Virtual Warehouses can be manually resized through the **Snowflake UI** or **SQL commands**.
+- Resizing a **running warehouse**:
+  - Does **not impact running queries**.
+  - Additional compute resources are used for **queued** and **new queries**.
+- **Decreasing the size** of a running warehouse:
+  - Removes compute resources.
+  - **Clears the warehouse cache**, which may result in longer query times for subsequent queries.
+
+#### Scaling Out: Multi-Cluster Warehouses
+
+A **multi-cluster warehouse** is a group of Virtual Warehouses that can automatically **scale in and out** based on query demand and concurrency levels.
+
+The key parameters for configuring a multi-cluster warehouse are:
+
+1. **MIN_CLUSTER_COUNT**:
+   - Specifies the **minimum number of warehouses** in the multi-cluster group.
+
+2. **MAX_CLUSTER_COUNT**:
+   - Specifies the **maximum number of warehouses** in the multi-cluster group.
+
+- **MAXIMIZED Mode**:
+  - If `MIN_CLUSTER_COUNT` and `MAX_CLUSTER_COUNT` are set to the same value, the multi-cluster warehouse will run **at full capacity**, with the specified number of clusters running continuously.
+  
+- **AUTO-SCALE Mode**:
+  - If `MIN_CLUSTER_COUNT` and `MAX_CLUSTER_COUNT` are set to different values, the multi-cluster warehouse will **scale in and out** dynamically based on demand.
+
+#### Scaling Policies
+
+Multi-cluster warehouses operate under one of two scaling policies:
+
+1. **Standard Policy**:
+   - Aims to **minimize query queuing** by scaling out quickly.
+   - Behavior:
+     - When a query is queued, a **new warehouse is added immediately**.
+     - Every minute, a background process checks if the load on the least busy warehouse can be redistributed.
+     - If this condition is met for **2 consecutive minutes**, the least busy warehouse is marked for **shutdown**.
+
+2. **Economy Policy**:
+   - Aims to **conserve credits** by running warehouses fully loaded for longer periods.
+   - Behavior:
+     - When a query is queued, the system estimates whether there is enough query load to keep a new warehouse **busy for 6 minutes**.
+     - Every minute, a background process checks if the load on the least busy warehouse can be redistributed.
+     - If this condition is met for **6 consecutive minutes**, the least busy warehouse is marked for **shutdown**.
+
+#### Credit Consumption in Multi-Cluster Warehouses
+
+- The **total credit cost** of a multi-cluster warehouse is the sum of all the individual running warehouses in the group.
+- The **maximum credits consumed** by a multi-cluster warehouse are calculated as:
+  - `(Number of warehouses) × (Hourly credit rate of warehouse size)`.
+- Since multi-cluster warehouses dynamically scale based on demand, the actual credit usage is usually **a fraction of the maximum consumption**.
+
+#### Concurrency Behavior Properties
+
+Multi-cluster warehouses include parameters to manage query concurrency and timeouts:
+
+1. **MAX_CONCURRENCY_LEVEL**:
+   - Specifies the **number of concurrent SQL statements** that can be executed against a warehouse before:
+     - Queries are queued.
+     - Additional compute power is provided.
+
+2. **STATEMENT_QUEUED_TIMEOUT_IN_SECONDS**:
+   - Specifies the **time (in seconds)** a SQL statement can remain queued on a warehouse before it is aborted.
+
+3. **STATEMENT_TIMEOUT_IN_SECONDS**:
+   - Specifies the **time (in seconds)** after which a running SQL statement is **aborted** on a warehouse.
+
+#### Examples of Multi-Cluster Warehouse Configuration
+
+Below are SQL examples of configuring a multi-cluster warehouse with comments explaining the parameters:
+
+```sql
+-- Create a multi-cluster warehouse with a minimum of 1 cluster and a maximum of 3 clusters
+CREATE WAREHOUSE MY_MULTI_WH
+WAREHOUSE_SIZE = 'LARGE'            -- Set the size of each individual warehouse
+MIN_CLUSTER_COUNT = 1               -- Minimum number of clusters in the group
+MAX_CLUSTER_COUNT = 3               -- Maximum number of clusters in the group
+SCALING_POLICY = 'STANDARD';        -- Use the standard scaling policy to minimize queuing
+
+-- Adjust concurrency settings for the warehouse
+ALTER WAREHOUSE MY_MULTI_WH
+SET
+   MAX_CONCURRENCY_LEVEL = 10,      -- Allow up to 10 concurrent SQL statements
+   STATEMENT_QUEUED_TIMEOUT_IN_SECONDS = 30, -- Abort queries queued for more than 30 seconds
+   STATEMENT_TIMEOUT_IN_SECONDS = 300; -- Abort running queries after 300 seconds (5 minutes)
+
+-- Change the scaling policy to ECONOMY to conserve credits
+ALTER WAREHOUSE MY_MULTI_WH
+SET SCALING_POLICY = 'ECONOMY';
+
+-- Suspend the warehouse to stop compute usage
+ALTER WAREHOUSE MY_MULTI_WH SUSPEND;
+
+-- Resume the warehouse to start it again
+ALTER WAREHOUSE MY_MULTI_WH RESUME;
+```
