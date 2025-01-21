@@ -64,6 +64,13 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
     - [15.6.2. Verifying Query Acceleration Eligibility](#1562-verifying-query-acceleration-eligibility)
     - [15.6.3. Example Usage](#1563-example-usage)
 - [16. Performance Concepts: Query Optimization](#16-performance-concepts-query-optimization)
+  - [16.1. Analytics Tools](#161-analytics-tools)
+  - [16.2. SQL Tuning](#162-sql-tuning)
+  - [16.3. Caching](#163-caching)
+  - [16.4. Materialized Views](#164-materialized-views)
+  - [16.5. Clustering and Pruning](#165-clustering-and-pruning)
+  - [16.6. Search Optimization Service](#166-search-optimization-service)
+  - [16.7. Summary of Optimization Techniques](#167-summary-of-optimization-techniques)
 
 ## 1. Introduction
 
@@ -1021,7 +1028,7 @@ ALTER WAREHOUSE my_wh SET AUTO_RESUME = TRUE;
 #### 15.2.2. Summary of Key Warehouse Parameters
 
 | **Parameter**         | **Description**                                                                         | **Default Value** |
-|  |  | -- |
+| --------------------- | --------------------------------------------------------------------------------------- | ----------------- |
 | `AUTO_SUSPEND`        | Automatically suspends a warehouse after a specified period of inactivity (in seconds). | 600 seconds       |
 | `AUTO_RESUME`         | Automatically resumes a warehouse when a query is submitted.                            | TRUE              |
 | `INITIALLY_SUSPENDED` | Specifies whether a warehouse should start in a suspended state.                        | FALSE             |
@@ -1234,4 +1241,118 @@ SELECT SYSTEM$ESTIMATE_QUERY_ACCELERATION('<your_query_id>') AS acceleration_est
 
 ## 16. Performance Concepts: Query Optimization
 
-See presentation and hands-on queries for details.
+This section focuses on query optimization techniques and features in Snowflake to improve query performance and execution efficiency. Below are the key concepts and tools related to query optimization:
+
+### 16.1. Analytics Tools
+
+Snowflake provides **analytics tools** to analyze query performance and identify optimization opportunities. These tools include:
+
+- **Query Profiler**:
+  - A visual tool available in the Snowflake Web UI that allows users to view query execution plans and analyze performance bottlenecks.
+  - Use the **execution graph** to understand how each step in the query plan contributes to overall execution time.
+
+- **Query History**:
+  - View detailed query metadata, such as execution time, resource usage, and query status, using the `QUERY_HISTORY` view or the Web UI.
+
+- **ACCOUNT_USAGE Schema**:
+  - Monitor and analyze resource usage, query patterns, and performance metrics across your Snowflake account.
+
+### 16.2. SQL Tuning
+
+SQL tuning involves rewriting queries to improve performance and reduce resource usage. Key practices include:
+
+1. **Avoid SELECT \***:
+   - Specify the required columns instead of using `SELECT *` to reduce the amount of data scanned.
+
+2. **Leverage Filters and Joins**:
+   - Use `WHERE` and `JOIN` clauses to limit the amount of data retrieved and processed.
+
+3. **Avoid Inefficient Operations**:
+   - Avoid nested queries or unoptimized joins when simpler alternatives are available.
+
+4. **Use Temporary Tables**:
+   - For complex queries, break them into smaller steps using **temporary tables** or **common table expressions (CTEs)**.
+
+### 16.3. Caching
+
+Caching in Snowflake helps improve query performance by reducing the need to reprocess or fetch data from the storage layer. Snowflake uses the following types of caching:
+
+1. **Result Cache**:
+   - Stores the results of a query for **up to 24 hours**.
+   - Subsequent identical queries (with the same context) can reuse the cached results, avoiding re-execution.
+   - **Key Notes**:
+     - Works across all Virtual Warehouses for the same user/account.
+     - Results are invalidated if the underlying data changes.
+
+2. **Warehouse Cache**:
+   - Stores **raw data** retrieved from the storage layer on the **local SSDs** of the Virtual Warehouse.
+   - **Improves performance** for subsequent queries accessing the same data, as the data is read from the local cache instead of the storage layer.
+   - **Key Notes**:
+     - Cache is **cleared** when the warehouse is resized, suspended, or restarted.
+
+3. **Metadata Cache**:
+   - Stores metadata information about table structure, micro-partitions, and query plans.
+   - **Improves planning performance** by reducing the time spent on metadata retrieval.
+
+### 16.4. Materialized Views
+
+Materialized Views store **precomputed query results**, which are automatically updated as the underlying data changes. They can significantly improve performance for queries that frequently access the same data.
+
+- **Use Cases**:
+  - Ideal for repetitive queries or aggregations over large datasets.
+
+- **Costs**:
+  - Materialized views incur **storage costs** for the precomputed data and **compute costs** for background maintenance tasks.
+
+### 16.5. Clustering and Pruning
+
+Snowflake uses **automatic clustering** to organize data into **micro-partitions**, improving query performance by reducing the amount of data scanned.
+
+- **Clustering**:
+  - Data is automatically stored in micro-partitions based on query patterns.
+  - **Clustering Keys**:
+    - For large tables, explicitly defining a clustering key can improve performance for range queries or filtering.
+
+- **Pruning**:
+  - **Partition Pruning** minimizes the amount of data scanned by ignoring irrelevant micro-partitions based on query predicates (e.g., `WHERE` clauses).
+
+- **Example**:
+  - If a table is clustered by a `date` column, queries filtering on a date range will scan fewer partitions, reducing query execution time.
+
+### 16.6. Search Optimization Service
+
+The **Search Optimization Service** is designed to improve query performance for **point lookups** or queries with selective filters.
+
+- The service creates and maintains additional indexing-like metadata to enable faster lookups.
+- It is **optional** and specifically useful for queries that access small subsets of large tables.
+
+Note that enabling the Search Optimization Service incurs additional **compute costs** for maintaining the metadata and **storage costs** for the additional structures.
+
+- **Enable Search Optimization**:
+  - Enable the service for specific tables or schemas based on workload requirements.
+- **Cost**:
+  - The service incurs additional compute costs for maintaining the metadata and storage costs for the additional structures.
+
+```sql
+-- Enable the Search Optimization Service for a table
+ALTER TABLE my_table
+SET SEARCH_OPTIMIZATION = TRUE;
+
+-- Check the status of the Search Optimization Service
+SHOW SEARCH OPTIMIZATION ON my_table;
+
+-- Disable the Search Optimization Service
+ALTER TABLE my_table
+SET SEARCH_OPTIMIZATION = FALSE;
+```
+
+### 16.7. Summary of Optimization Techniques
+
+| **Concept**                | **Description**                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------- |
+| **Query Profiler**         | Visual tool to analyze execution plans and identify bottlenecks.                              |
+| **SQL Tuning**             | Rewrite queries for better performance (e.g., avoid `SELECT *`, use filters, optimize joins). |
+| **Caching**                | Improve query performance using result cache, warehouse cache, and metadata cache.            |
+| **Materialized Views**     | Precompute query results for frequently accessed data.                                        |
+| **Clustering and Pruning** | Use clustering keys and partition pruning to reduce the amount of data scanned.               |
+| **Search Optimization**    | Improve performance for point lookups and selective queries using indexing-like metadata.     |
