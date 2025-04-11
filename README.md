@@ -76,6 +76,7 @@ Snowflake is a cloud-native **data platform** offered as a service (SaaS). It pr
   - [17.2. Percentage Scanned from the Data Cache](#172-percentage-scanned-from-the-data-cache)
   - [17.3. Spilling to Local or Remote Storage](#173-spilling-to-local-or-remote-storage)
   - [17.4. Key Takeaways](#174-key-takeaways)
+- [18. Additional Sanofi notes](#18-additional-sanofi-notes)
 
 ## 1. Introduction
 
@@ -1417,3 +1418,5 @@ SET SEARCH_OPTIMIZATION = FALSE;
 | **Spilling to Storage**                | Temporary storage of intermediate query results to local or remote storage when memory is low.       | Resize the warehouse or optimize queries to avoid spilling. Prefer local spilling over remote spilling for speed. |
 
 Let me know if you'd like additional examples or more details on any of these topics!
+
+## 18. Additional Sanofi Notes
