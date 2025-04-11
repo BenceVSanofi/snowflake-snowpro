@@ -1420,3 +1420,7 @@ SET SEARCH_OPTIMIZATION = FALSE;
 Let me know if you'd like additional examples or more details on any of these topics!
 
 ## 18. Additional Sanofi Notes
+### 18.1. Stages, Directory tables
+- **Directory Tables**:
+A directory table is **not a separate database object** and is conceptually similar to an external table because it stores file-level metadata about the data files in the stage.
+A directory table has **no grantable privileges** of its own.
