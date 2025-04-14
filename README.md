@@ -1424,3 +1424,7 @@ Let me know if you'd like additional examples or more details on any of these to
 - **Directory Tables**:
 A directory table is **not a separate database object** and is conceptually similar to an external table because it stores file-level metadata about the data files in the stage.
 A directory table has **no grantable privileges** of its own.
+### 18.2. Data unloading, export
+When data is unloaded from Snowflake, it is automatically compressed using gzip compression. This is the default behavior; however, you can specify alternate compression methods or turn off compression entirely. 
+The unloading process automatically exports to multiple files so that it can take advantage of the parallelism offered by Snowflake. However, if needed, you can set the SINGLE parameter to true to ensure the export goes to a single file. 
+The default size of each output file is 16 MB but can be changed using the MAX_FILE_SIZE parameter. The maximum allowed size per file is 5GB if you export data to cloud storage.
