@@ -1460,3 +1460,17 @@ Where each clustering key consists of one or more table columns/expressions, whi
 -Base columns.
 -Expressions on base columns.
 -Expressions on paths in VARIANT columns.
+
+### 18.6 Types of URLs available to access files
+The following types of URLs are available to access files in cloud storage:
+
+**Scoped URL**
+Encoded URL that permits temporary access to a staged file without granting privileges to the stage.
+
+The URL expires when the persisted query result period ends (i.e. the results cache expires), which is currently 24 hours.
+
+**File URL**
+URL that identifies the database, schema, stage, and file path to a set of files. A role that has sufficient privileges on the stage can access the files.
+
+**Pre-signed URL**
+Simple HTTPS URL used to access a file via a web browser. A file is temporarily accessible to users via this URL using a pre-signed access token. The expiration time for the access token is configurable.
