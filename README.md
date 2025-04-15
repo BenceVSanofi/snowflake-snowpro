@@ -1434,3 +1434,15 @@ Users with the ACCOUNTADMIN role, or a role with the global MONITOR USAGE privil
 When data is unloaded from Snowflake, it is automatically compressed using gzip compression. This is the default behavior; however, you can specify alternate compression methods or turn off compression entirely. 
 The unloading process automatically exports to multiple files so that it can take advantage of the parallelism offered by Snowflake. However, if needed, you can set the SINGLE parameter to true to ensure the export goes to a single file. 
 The default size of each output file is 16 MB but can be changed using the MAX_FILE_SIZE parameter. The maximum allowed size per file is 5GB if you export data to cloud storage.
+
+### 18.3 Column level masking
+This feature requires Enterprise Edition (or higher).
+Column-level Security in Snowflake allows the application of a masking policy to a column within a table or view. Currently, Column-level Security includes two features:
+
+Dynamic Data Masking
+
+External Tokenization
+
+Dynamic Data Masking is a Column-level Security feature that uses masking policies to selectively mask plain-text data in table and view columns at query time.
+
+External Tokenization enables accounts to tokenize data before loading it into Snowflake and detokenize the data at query runtime. Tokenization is the process of removing sensitive data by replacing it with an undecipherable token. External Tokenization makes use of masking policies with external functions.
