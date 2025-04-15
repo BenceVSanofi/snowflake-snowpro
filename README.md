@@ -1477,3 +1477,6 @@ Simple HTTPS URL used to access a file via a web browser. A file is temporarily 
 
 ### 18.6 Sharing costs
 Since the provider account stores and pays for the data storage, the data consumer doesn't have to pay anything extra for storage. However, the data consumer pays for the compute used to run queries on shared data. When queries are run on shared data, the compute of the data consumer is used
+
+### 18.7 Snowflake scripting
+A typical Snowflake Scripting block will have a DECLARE section where variables and cursors may be declared. The BEGIN & END enclose the actual logic of the script and may optionally contain the EXCEPTION section, where you handle any exceptions. https://docs.snowflake.com/en/developer-guide/snowflake-scripting/index
