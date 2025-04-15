@@ -1498,3 +1498,6 @@ A typical Snowflake Scripting block will have a DECLARE section where variables 
 When new columns are added to a base table with a materialized view on top, the new columns are NOT propagated automatically to the materialized view. Even in a scenario where a SELECT * statement might be used in a materialized view; the new columns are NOT propagated because the columns of a materialized view are defined when the materialized view is defined.
 
 Also, the materialized view is NOT suspended, so it can continue to be used.
+
+### 18.9 What can be cloned?
+Virtual warehouses & Share objects cannot be cloned. Tables, Schemas & Databases can be cloned. Other objects that can be cloned include Stages, File Formats, Tasks, Sequences, and Streams. https://docs.snowflake.com/en/user-guide/object-clone
