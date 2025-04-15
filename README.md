@@ -1434,6 +1434,19 @@ Users with the ACCOUNTADMIN role, or a role with the global MONITOR USAGE privil
 When data is unloaded from Snowflake, it is automatically compressed using gzip compression. This is the default behavior; however, you can specify alternate compression methods or turn off compression entirely. 
 The unloading process automatically exports to multiple files so that it can take advantage of the parallelism offered by Snowflake. However, if needed, you can set the SINGLE parameter to true to ensure the export goes to a single file. 
 The default size of each output file is 16 MB but can be changed using the MAX_FILE_SIZE parameter. The maximum allowed size per file is 5GB if you export data to cloud storage.
+The process for unloading data into files is the same as the loading process, except in reverse:
+
+Step 1
+Use the COPY INTO <location> command to copy the data from the Snowflake database table into one or more files in a Snowflake or external stage.
+
+Step 2
+Download the file from the stage:
+
+From a Snowflake stage, use the GET command to download the data file(s).
+
+From S3, use the interfaces/tools provided by Amazon S3 to get the data file(s).
+
+From Azure, use the interfaces/tools provided by Microsoft Azure to get the data file(s).
 
 ### 18.3 Column level masking
 This feature requires Enterprise Edition (or higher).
