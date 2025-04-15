@@ -1474,3 +1474,6 @@ URL that identifies the database, schema, stage, and file path to a set of files
 
 **Pre-signed URL**
 Simple HTTPS URL used to access a file via a web browser. A file is temporarily accessible to users via this URL using a pre-signed access token. The expiration time for the access token is configurable.
+
+### 18.6 Sharing costs
+Since the provider account stores and pays for the data storage, the data consumer doesn't have to pay anything extra for storage. However, the data consumer pays for the compute used to run queries on shared data. When queries are run on shared data, the compute of the data consumer is used
