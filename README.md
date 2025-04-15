@@ -1493,3 +1493,8 @@ Since the provider account stores and pays for the data storage, the data consum
 
 ### 18.7 Snowflake scripting
 A typical Snowflake Scripting block will have a DECLARE section where variables and cursors may be declared. The BEGIN & END enclose the actual logic of the script and may optionally contain the EXCEPTION section, where you handle any exceptions. https://docs.snowflake.com/en/developer-guide/snowflake-scripting/index
+
+### 18.8 Materialized view - schema change
+When new columns are added to a base table with a materialized view on top, the new columns are NOT propagated automatically to the materialized view. Even in a scenario where a SELECT * statement might be used in a materialized view; the new columns are NOT propagated because the columns of a materialized view are defined when the materialized view is defined.
+
+Also, the materialized view is NOT suspended, so it can continue to be used.
