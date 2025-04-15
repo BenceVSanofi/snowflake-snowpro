@@ -1450,3 +1450,13 @@ External Tokenization enables accounts to tokenize data before loading it into S
 
 ### 18.4 Query results cache
 The query result cache for a query has an **initial validity period of twenty-four hours**. The cache is purged if a new query doesn't reuse the previously generated cache within 24 hours. If a new query uses the result cache, **the validity period for the query result cache is reset to another 24 hours**. It is now valid for another 24 hours from when it was reused. This extension of the first query result cache can continue for up to a **maximum of 31 days** from the point in time when a query result cache was initially produced. After 31 days, the query result cache for a query is purged altogether. https://docs.snowflake.com/en/user-guide/querying-persisted-results
+
+### 18.5 Clustering keys
+Defining a Clustering Key for a Table
+A clustering key can be defined when a table is created by appending a CLUSTER BY clause to CREATE TABLE:
+
+CREATE TABLE <name> ... CLUSTER BY ( <expr1> [ , <expr2> ... ] )
+Where each clustering key consists of one or more table columns/expressions, which can be of **any data type, except GEOGRAPHY, VARIANT, OBJECT, or ARRAY.** A clustering key can contain any of the following:
+-Base columns.
+-Expressions on base columns.
+-Expressions on paths in VARIANT columns.
