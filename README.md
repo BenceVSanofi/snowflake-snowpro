@@ -1424,6 +1424,12 @@ Let me know if you'd like additional examples or more details on any of these to
 - **Directory Tables**:
 A directory table is **not a separate database object** and is conceptually similar to an external table because it stores file-level metadata about the data files in the stage.
 A directory table has **no grantable privileges** of its own.
+
+An overhead to manage event notifications for the automatic refreshing of directory table metadata is included in your charges. This overhead increases in relation to the number of files added in cloud storage for your stages that include directory tables. This overhead charge appears as Snowpipe charges in your billing statement because Snowpipe is used for event notifications for the automatic directory table refreshes. You can estimate this charge by querying the PIPE_USAGE_HISTORY function or examining the Account Usage PIPE_USAGE_HISTORY view.
+
+In addition, a small maintenance overhead is charged for manually refreshing the directory table metadata (using ALTER STAGE … REFRESH). This overhead is charged in accordance with the standard cloud services billing model, like all similar activity in Snowflake. Manual refreshes of directory table metadata don’t appear in queries to the PIPE_USAGE_HISTORY function or in the Account Usage PIPE_USAGE_HISTORY view.
+
+Users with the ACCOUNTADMIN role, or a role with the global MONITOR USAGE privilege, can query the AUTO_REFRESH_REGISTRATION_HISTORY table function to retrieve the history of data files registered in the metadata of specified objects and the credits billed for these operations.
 ### 18.2. Data unloading, export
 When data is unloaded from Snowflake, it is automatically compressed using gzip compression. This is the default behavior; however, you can specify alternate compression methods or turn off compression entirely. 
 The unloading process automatically exports to multiple files so that it can take advantage of the parallelism offered by Snowflake. However, if needed, you can set the SINGLE parameter to true to ensure the export goes to a single file. 
