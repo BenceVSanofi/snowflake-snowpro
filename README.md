@@ -1446,3 +1446,7 @@ External Tokenization
 Dynamic Data Masking is a Column-level Security feature that uses masking policies to selectively mask plain-text data in table and view columns at query time.
 
 External Tokenization enables accounts to tokenize data before loading it into Snowflake and detokenize the data at query runtime. Tokenization is the process of removing sensitive data by replacing it with an undecipherable token. External Tokenization makes use of masking policies with external functions.
+
+
+### 18.4 Query results cache
+The query result cache for a query has an **initial validity period of twenty-four hours**. The cache is purged if a new query doesn't reuse the previously generated cache within 24 hours. If a new query uses the result cache, **the validity period for the query result cache is reset to another 24 hours**. It is now valid for another 24 hours from when it was reused. This extension of the first query result cache can continue for up to a **maximum of 31 days** from the point in time when a query result cache was initially produced. After 31 days, the query result cache for a query is purged altogether. https://docs.snowflake.com/en/user-guide/querying-persisted-results
